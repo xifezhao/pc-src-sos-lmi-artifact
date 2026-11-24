@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this software artifact, please cite the accompanying IEEE T-ITS manuscript."
+title: "Low-Frequency String Stability Conditions and Lifted Polynomial Certificates for Mixed Traffic Platoons under Delay Mismatch"
+authors:
+  - family-names: "Dong"
+    given-names: "Haiying"
+    orcid: "https://orcid.org/0000-0002-3909-3246"
+    affiliation: "Lanzhou Jiaotong University"
+  - family-names: "Zhao"
+    given-names: "Xiaofei"
+    orcid: "https://orcid.org/0000-0003-0772-8240"
+    affiliation: "Lanzhou Petrochemical University of Vocational Technology & Lanzhou Jiaotong University"
+type: software
+license: MIT
+repository-code: "https://github.com/xifezhao/pc-src-sos-lmi-artifact"
+version: "2.0.0"
+date-released: "2026-11-24"

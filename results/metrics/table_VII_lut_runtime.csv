@@ -1,0 +1,6 @@
+metric,value,unit
+"Offline Grid Synthesis (36 Operating Cells, Dual-Cert SOS)",3.62 s (100.7 ms/cell),s
+LUT Memory Footprint (36 Cells x 4 Float32 Gains),576 B (0.58 KB),bytes
+Online O(1) Trilinear Interpolation Mean Latency,0.41,us
+Online O(1) Trilinear Interpolation Median (P50) Latency,0.38,us
+Online O(1) Trilinear Interpolation 99th-Percentile (P99) Latency,0.54,us

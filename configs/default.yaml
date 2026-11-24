@@ -1,0 +1,868 @@
+# ==============================================================================
+# configs/default.yaml
+#
+# Global default configuration for:
+#   PC-SRC SOS-LMI Artifact
+#
+# This file defines the default parameters shared by all experiments, including
+# SOS-SDP synthesis, dual-certificate feasibility checking, time-domain
+# micro-simulation, figure generation, validation, and LUT deployment.
+#
+# Experiment-specific YAML files under configs/experiments/ may override any
+# field defined here.
+#
+# Reproducibility policy:
+#   - All experiments should load this file first.
+#   - All generated artifacts should store the SHA256 hash of this file.
+#   - No script should silently override physical, solver, or validation settings.
+# ==============================================================================
+
+
+# ------------------------------------------------------------------------------
+# 1. Project metadata
+# ------------------------------------------------------------------------------
+
+project:
+  name: "pc-src-sos-lmi-artifact"
+  short_name: "PC-SRC"
+  version: "1.0.0"
+  paper_title: "Dual-Certificate SOS-LMI Robust Control for Mixed Platoon Stop-and-Go Wave Attenuation"
+  authors:
+    - "Anonymous Author(s)"
+  artifact_mode: true
+  deterministic_mode: true
+  timezone: "UTC"
+
+  # This will be filled by src/pcsrc/utils/git_info.py if available.
+  git:
+    require_clean_worktree_for_release: false
+    record_commit_hash: true
+    record_branch: true
+    record_diff_hash: true
+
+
+# ------------------------------------------------------------------------------
+# 2. Global reproducibility settings
+# ------------------------------------------------------------------------------
+
+reproducibility:
+  random_seed: 20260816
+  numpy_seed: 20260816
+  python_hash_seed: 20260816
+
+  deterministic:
+    enabled: true
+    sort_grid_points: true
+    single_threaded_solver_default: false
+    fixed_ode_step_output: true
+    write_metadata_sidecar: true
+
+  metadata:
+    include_config_hash: true
+    include_git_commit: true
+    include_machine_info: true
+    include_solver_version: true
+    include_python_version: true
+    include_matlab_version: true
+
+  floating_point:
+    dtype: "float64"
+    print_precision: 10
+    csv_float_format: "%.10e"
+
+  audit:
+    save_command_line: true
+    save_environment_snapshot: true
+    save_dependency_freeze: true
+    save_runtime_summary: true
+
+
+# ------------------------------------------------------------------------------
+# 3. Repository paths
+# ------------------------------------------------------------------------------
+
+paths:
+  root: "."
+  configs: "configs"
+  docs: "docs"
+  scripts: "scripts"
+  source: "src/pcsrc"
+  matlab: "matlab"
+
+  data:
+    root: "data"
+    raw: "data/raw"
+    processed: "data/processed"
+    reference: "data/reference"
+
+    scenario_definitions: "data/raw/scenario_definitions"
+    external: "data/raw/external"
+
+    feasibility_grid: "data/processed/feasibility_grid"
+    simulations: "data/processed/simulations"
+    lut: "data/processed/lut"
+
+  certificates:
+    root: "certificates"
+    dual: "certificates/dual_certificate"
+    monolithic: "certificates/monolithic_certificate"
+    verification_logs: "certificates/verification_logs"
+
+  results:
+    root: "results"
+    figures: "results/figures"
+    tables: "results/tables"
+    metrics: "results/metrics"
+    logs: "results/logs"
+
+  notebooks: "notebooks"
+  tests: "tests"
+  benchmarks: "benchmarks"
+  third_party: "third_party"
+
+
+# ------------------------------------------------------------------------------
+# 4. File naming conventions
+# ------------------------------------------------------------------------------
+
+files:
+  logs:
+    full_reproduction: "results/logs/full_reproduction.log"
+    solver_grid: "results/logs/solver_grid.log"
+    simulation: "results/logs/simulation.log"
+    lut_benchmark: "results/logs/lut_benchmark.log"
+    environment_snapshot: "results/logs/environment_snapshot.txt"
+
+  feasibility:
+    grid_definition: "data/processed/feasibility_grid/grid_definition.csv"
+    dual_points: "data/processed/feasibility_grid/dual_certificate_feasible_points.csv"
+    monolithic_points: "data/processed/feasibility_grid/monolithic_feasible_points.csv"
+    fig5_data: "data/processed/feasibility_grid/fig5_gain_feasible_domain.csv"
+    fig6_slice_data: "data/processed/feasibility_grid/fig6_ka08_slice.csv"
+
+  simulations:
+    leader_profile: "data/raw/scenario_definitions/stop_and_go_leader_profile.csv"
+    nominal_parameters: "data/raw/scenario_definitions/nominal_platoon_parameters.yaml"
+    delay_profiles: "data/raw/scenario_definitions/delay_profiles.csv"
+
+    acceleration_profiles: "data/processed/simulations/stop_and_go_acceleration_profiles.csv"
+    spacing_profiles: "data/processed/simulations/stop_and_go_spacing_profiles.csv"
+    heatmap_acceleration: "data/processed/simulations/space_time_acceleration_heatmap.csv"
+    trajectories: "data/processed/simulations/vehicle_trajectories.csv"
+
+  lut:
+    csv: "data/processed/lut/certified_gain_lut.csv"
+    json: "data/processed/lut/certified_gain_lut.json"
+    metadata: "data/processed/lut/lut_metadata.yaml"
+    hash: "data/processed/lut/lut_hash.sha256"
+
+  certificates:
+    dual_certificate_A: "certificates/dual_certificate/certificate_A_topology_precondition.json"
+    dual_certificate_B: "certificates/dual_certificate/certificate_B_schur_robustness.json"
+    dual_residual_report: "certificates/dual_certificate/residual_report.json"
+    monolithic_certificate: "certificates/monolithic_certificate/monolithic_certificate.json"
+    monolithic_residual_report: "certificates/monolithic_certificate/residual_report.json"
+
+  verification:
+    solver_status_summary: "certificates/verification_logs/solver_status_summary.csv"
+    primal_dual_residuals: "certificates/verification_logs/lmi_eigenvalue_margins.csv"
+    infeasible_points_audit: "certificates/verification_logs/infeasible_points_audit.csv"
+
+  figures:
+    fig5_pdf: "results/figures/fig5_gain_feasible_domain.pdf"
+    fig5_tex: "results/figures/fig5_gain_feasible_domain.tex"
+    fig6_pdf: "results/figures/fig6_structural_conservatism.pdf"
+    fig6_tex: "results/figures/fig6_structural_conservatism.tex"
+    fig7_pdf: "results/figures/fig7_space_time_heatmap.pdf"
+    fig7_tex: "results/figures/fig7_space_time_heatmap.tex"
+    fig8_pdf: "results/figures/fig8_time_domain_profiles.pdf"
+    fig8_tex: "results/figures/fig8_time_domain_profiles.tex"
+    fig9_pdf: "results/figures/fig9_lut_deployment_architecture.pdf"
+    fig9_tex: "results/figures/fig9_lut_deployment_architecture.tex"
+
+
+# ------------------------------------------------------------------------------
+# 5. Physical and traffic model parameters
+# ------------------------------------------------------------------------------
+
+physical:
+  units:
+    time: "s"
+    distance: "m"
+    speed: "m/s"
+    acceleration: "m/s^2"
+
+  gravity: 9.80665
+
+  acceleration_limits:
+    min: -3.0
+    max: 3.0
+    tolerance: 1.0e-6
+
+  jerk_limits:
+    enabled: false
+    min: -5.0
+    max: 5.0
+
+  collision_boundary:
+    min_spacing: 0.0
+    strict_positive_spacing: true
+    tolerance: 1.0e-6
+
+  desired_safety_margin:
+    min_spacing_warning: 5.0
+    nominal_spacing: 22.0
+
+
+traffic:
+  platoon:
+    num_vehicles_total: 6
+    leader_index: 0
+    hdv_indices: [1, 2, 3, 4]
+    cav_indices: [5]
+    controlled_cav_index: 5
+
+  equilibrium:
+    nominal_speed: 22.0
+    nominal_spacing: 22.0
+    time_headway: 1.0
+
+  road:
+    grade: 0.0
+    curvature: 0.0
+    lane_count: 1
+
+  initial_conditions:
+    use_equilibrium_initialization: true
+    initial_speed_all: 22.0
+    initial_spacing_all: 22.0
+    perturb_spacing_std: 0.0
+    perturb_speed_std: 0.0
+
+
+# ------------------------------------------------------------------------------
+# 6. HDV behavior model
+# ------------------------------------------------------------------------------
+
+hdv_model:
+  type: "linearized_ovm"
+  description: "Linearized human-driven vehicle model used in mixed platoon simulation."
+
+  # Parameters for an OVM/IDM-like surrogate.
+  ovm:
+    alpha: 0.60
+    beta: 0.90
+    desired_speed: 30.0
+    standstill_spacing: 5.0
+    transition_spacing: 20.0
+
+  idm:
+    enabled: false
+    desired_speed: 30.0
+    max_acceleration: 1.4
+    comfortable_deceleration: 2.0
+    minimum_spacing: 5.0
+    time_headway: 1.2
+    delta: 4.0
+
+  linearized:
+    spacing_gain: 0.35
+    relative_velocity_gain: 0.55
+    velocity_gain: 0.20
+
+  noise:
+    enabled: false
+    acceleration_std: 0.0
+    reaction_time_std: 0.0
+
+
+# ------------------------------------------------------------------------------
+# 7. CAV actuator, communication, and delay model
+# ------------------------------------------------------------------------------
+
+cav:
+  actuator:
+    model: "first_order_lag_with_delay"
+    nominal_tau_e: 0.35
+    tau_e_min: 0.20
+    tau_e_max: 0.60
+
+    input_delay_tau_a: 0.00
+
+    transfer_function:
+      numerator: [1.0]
+      denominator: [0.35, 1.0]
+
+    saturation:
+      enabled: true
+      min_acceleration: -3.0
+      max_acceleration: 3.0
+      report_clipping: true
+
+  communication:
+    nominal_tau_c: 0.18
+    tau_c_min: 0.00
+    tau_c_max: 0.40
+    delay_profile: "constant"
+    packet_loss_enabled: false
+    packet_loss_probability: 0.0
+
+  delay_mismatch:
+    nominal_delta_max: 0.08
+    delta_max_min: 0.00
+    delta_max_max: 0.16
+    uncertainty_type: "bounded_interval"
+
+  sensor:
+    radar_vision_latency: 0.03
+    measurement_noise_enabled: false
+    spacing_noise_std: 0.0
+    relative_velocity_noise_std: 0.0
+    acceleration_noise_std: 0.0
+
+
+# ------------------------------------------------------------------------------
+# 8. PC-SRC controller defaults
+# ------------------------------------------------------------------------------
+
+controller:
+  name: "PC-SRC"
+  type: "preconditioned_communication_string_robust_controller"
+
+  control_law:
+    use_spacing_error: true
+    use_relative_velocity: true
+    use_preceding_acceleration: true
+
+  nominal_gain:
+    kp: 1.15
+    kv: 1.18
+    ka: 0.61
+
+  gain_bounds:
+    kp:
+      min: 0.10
+      max: 2.60
+    kv:
+      min: 0.10
+      max: 3.00
+    ka:
+      min: 0.00
+      max: 1.25
+
+  scheduling:
+    enabled: true
+    source: "lut"
+    interpolation: "nearest"
+    fallback_policy: "nearest_feasible"
+    require_certificate: true
+
+  safety_filter:
+    enabled: false
+    type: "none"
+
+  anti_windup:
+    enabled: false
+
+
+# ------------------------------------------------------------------------------
+# 9. SOS-LMI and certificate synthesis defaults
+# ------------------------------------------------------------------------------
+
+sos_lmi:
+  formulation:
+    robust_attenuation_certificate: true
+    topology_precondition_certificate: true
+    use_dual_certificate: true
+    use_monolithic_baseline: true
+    use_schur_lift: true
+
+  polynomial:
+    variables:
+      - "kp"
+      - "kv"
+      - "ka"
+      - "tau_c"
+      - "tau_e"
+      - "delta"
+
+    degree:
+      certificate_A: 2
+      certificate_B: 2
+      monolithic: 2
+      multipliers: 2
+
+    basis: "monomial"
+    basis_scaling: true
+    remove_redundant_monomials: true
+
+  positivity_domain:
+    gain_box:
+      kp: [0.10, 2.60]
+      kv: [0.10, 3.00]
+      ka: [0.00, 1.25]
+
+    delay_box:
+      tau_c: [0.00, 0.40]
+      tau_e: [0.20, 0.60]
+      delta: [0.00, 0.16]
+
+  gridding:
+    enabled: true
+    mode: "structured"
+
+    kp_values:
+      start: 0.35
+      stop: 2.35
+      num: 41
+
+    kv_values:
+      start: 0.40
+      stop: 2.70
+      num: 47
+
+    ka_values:
+      start: 0.20
+      stop: 1.05
+      num: 18
+
+    tau_c_values: [0.18]
+    tau_e_values: [0.35]
+    delta_max_values: [0.02, 0.08, 0.14]
+
+    fixed_slices:
+      ka_for_fig6: 0.80
+      tau_c_for_figures: 0.18
+      tau_e_for_figures: 0.35
+
+    fast_mode:
+      kp_values:
+        start: 0.50
+        stop: 2.20
+        num: 12
+      kv_values:
+        start: 0.60
+        stop: 2.50
+        num: 12
+      ka_values: [0.80]
+      delta_max_values: [0.08]
+
+  feasibility:
+    min_lmi_eigenvalue_tolerance: -1.0e-7
+    max_primal_residual: 1.0e-6
+    max_dual_residual: 1.0e-6
+    require_solver_optimal: false
+    acceptable_solver_status:
+      - "optimal"
+      - "near_optimal"
+      - "solved"
+      - "primal_and_dual_feasible"
+
+  residual_reporting:
+    save_gram_matrices: true
+    save_sos_multipliers: true
+    save_lmi_eigenvalues: true
+    save_primal_dual_residuals: true
+    save_infeasible_audit: true
+
+
+# ------------------------------------------------------------------------------
+# 10. Solver defaults
+# ------------------------------------------------------------------------------
+
+solver:
+  preferred: "mosek"
+  fallback_order:
+    - "mosek"
+    - "sdpt3"
+    - "sedumi"
+    - "scs"
+
+  common:
+    verbose: false
+    save_solver_logs: true
+    max_wall_time_seconds: 7200
+    threads: 0
+    warm_start: false
+    scaling: true
+
+  mosek:
+    enabled: true
+    require_license: false
+    parameters:
+      MSK_DPAR_INTPNT_CO_TOL_PFEAS: 1.0e-8
+      MSK_DPAR_INTPNT_CO_TOL_DFEAS: 1.0e-8
+      MSK_DPAR_INTPNT_CO_TOL_REL_GAP: 1.0e-8
+      MSK_IPAR_NUM_THREADS: 0
+
+  sdpt3:
+    enabled: true
+    parameters:
+      gaptol: 1.0e-8
+      inftol: 1.0e-8
+      maxit: 100
+
+  sedumi:
+    enabled: true
+    parameters:
+      eps: 1.0e-8
+      maxiter: 150
+
+  scs:
+    enabled: true
+    intended_use: "fallback_fast_smoke_tests_only"
+    parameters:
+      eps_abs: 1.0e-5
+      eps_rel: 1.0e-5
+      max_iters: 50000
+
+
+# ------------------------------------------------------------------------------
+# 11. Time-domain simulation defaults
+# ------------------------------------------------------------------------------
+
+simulation:
+  scenario: "stop_and_go"
+  t_start: 0.0
+  t_end: 40.0
+  dt_output: 0.05
+
+  integrator:
+    method: "RK45"
+    rtol: 1.0e-7
+    atol: 1.0e-9
+    max_step: 0.02
+
+  delay_buffer:
+    interpolation: "linear"
+    history_policy: "equilibrium"
+    max_delay: 0.60
+
+  leader_profile:
+    type: "brake_recover_pulse"
+    braking_start_time: 8.0
+    braking_peak_time: 11.5
+    recovery_peak_time: 20.5
+    braking_amplitude: -2.3
+    recovery_amplitude: 1.15
+    braking_width: 2.1
+    recovery_width: 2.7
+
+  stop_and_go:
+    perturbation_vehicle: "leader"
+    report_wave_amplification: true
+    report_cav_attenuation: true
+
+  outputs:
+    save_state_trajectory: true
+    save_acceleration_profiles: true
+    save_spacing_profiles: true
+    save_heatmap_data: true
+    save_metrics: true
+
+
+# ------------------------------------------------------------------------------
+# 12. Metrics and validation defaults
+# ------------------------------------------------------------------------------
+
+metrics:
+  acceleration:
+    compute_peak_abs: true
+    compute_min_max: true
+    compute_rms: true
+    compute_clipping_count: true
+
+  spacing:
+    compute_min_spacing: true
+    compute_collision_count: true
+    compute_safety_margin: true
+
+  wave:
+    compute_hdv_amplification_ratio: true
+    compute_cav_attenuation_ratio: true
+    reference_signal: "leader_acceleration"
+
+  conservatism:
+    compute_area_ratio: true
+    compute_newly_certified_area: true
+    min_expected_area_ratio_dual_over_mono: 1.10
+
+  lut:
+    compute_lookup_latency: true
+    compute_memory_footprint: true
+    compute_hash: true
+
+
+validation:
+  enabled: true
+
+  tolerances:
+    absolute: 1.0e-8
+    relative: 1.0e-6
+    figure_data_absolute: 1.0e-6
+    metric_absolute: 1.0e-6
+    hash_check_required_for_reference: false
+
+  pass_criteria:
+    no_collision:
+      enabled: true
+      min_spacing_strictly_greater_than: 0.0
+      tolerance: 1.0e-6
+
+    no_actuator_clipping:
+      enabled: true
+      min_acceleration: -3.0
+      max_acceleration: 3.0
+      tolerance: 1.0e-6
+
+    dual_region_superset:
+      enabled: true
+      require_dual_area_greater_than_monolithic: true
+      min_area_ratio: 1.10
+
+    cav_attenuation:
+      enabled: true
+      max_cav_peak_over_last_hdv_peak: 0.70
+
+    lut_lookup:
+      enabled: true
+      expected_complexity: "O(1)"
+      max_average_lookup_time_microseconds: 100.0
+
+    sos_certificate:
+      enabled: true
+      min_lmi_eigenvalue_tolerance: -1.0e-7
+      max_primal_residual: 1.0e-6
+      max_dual_residual: 1.0e-6
+
+
+# ------------------------------------------------------------------------------
+# 13. LUT generation and deployment defaults
+# ------------------------------------------------------------------------------
+
+lut:
+  enabled: true
+
+  dimensions:
+    - "tau_c"
+    - "tau_e"
+    - "delta_max"
+
+  grid:
+    tau_c:
+      start: 0.00
+      stop: 0.40
+      num: 9
+
+    tau_e:
+      start: 0.20
+      stop: 0.60
+      num: 9
+
+    delta_max:
+      start: 0.00
+      stop: 0.16
+      num: 9
+
+  value_fields:
+    - "kp"
+    - "kv"
+    - "ka"
+    - "feasibility_margin"
+    - "certificate_id"
+
+  lookup:
+    method: "nearest"
+    clamp_out_of_range: true
+    require_feasible_entry: true
+    fallback_policy: "nearest_feasible"
+
+  deployment:
+    target: "automotive_edge_controller"
+    format:
+      csv: true
+      json: true
+      c_header: false
+
+    memory_budget_kb: 512
+    average_lookup_budget_us: 100.0
+
+  integrity:
+    compute_sha256: true
+    verify_on_load: true
+    metadata_required: true
+
+
+# ------------------------------------------------------------------------------
+# 14. Plotting defaults
+# ------------------------------------------------------------------------------
+
+plotting:
+  backend: "matplotlib"
+  export_tikz: true
+  export_pgfplots: true
+  export_pdf: true
+  export_png: false
+
+  style:
+    ieee: true
+    font_family: "Times New Roman"
+    math_font: "stix"
+    font_size: 8
+    axis_label_size: 8
+    tick_label_size: 7
+    legend_size: 7
+    line_width: 1.1
+    marker_size: 3.0
+    grid: true
+    grid_alpha: 0.35
+
+  colors:
+    leader: "black"
+    hdv1: "#666666"
+    hdv2: "#D95F02"
+    hdv3: "#7570B3"
+    hdv4: "#D73027"
+    cav: "#1F77B4"
+
+    dual_certificate: "#1F77B4"
+    monolithic: "#D62728"
+    newly_certified_region: "#A6CEE3"
+
+    braking_red: "#A50026"
+    cruising_white: "#FFFFFF"
+    acceleration_blue: "#313695"
+
+  figure_defaults:
+    dpi: 300
+    bbox_inches: "tight"
+    transparent: false
+
+  figures:
+    fig5:
+      enabled: true
+      view_azimuth: 125
+      view_elevation: 28
+      fixed_tau_c: 0.18
+      fixed_tau_e: 0.35
+      delta_values: [0.02, 0.08, 0.14]
+
+    fig6:
+      enabled: true
+      fixed_ka: 0.80
+      fixed_tau_c: 0.18
+      fixed_tau_e: 0.35
+
+    fig7:
+      enabled: true
+      heatmap_quantity: "acceleration"
+      colorbar_min: -4.5
+      colorbar_max: 2.5
+      y_axis: "vehicle_index"
+
+    fig8:
+      enabled: true
+      acceleration_limits: [-3.0, 3.0]
+      spacing_collision_boundary: 0.0
+
+    fig9:
+      enabled: true
+      architecture: "offline_to_online_lut"
+
+
+# ------------------------------------------------------------------------------
+# 15. Logging defaults
+# ------------------------------------------------------------------------------
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+  datefmt: "%Y-%m-%dT%H:%M:%SZ"
+
+  console:
+    enabled: true
+    level: "INFO"
+
+  file:
+    enabled: true
+    level: "DEBUG"
+    directory: "results/logs"
+
+  progress_bar:
+    enabled: true
+
+  warnings:
+    treat_numerical_warnings_as_errors: false
+    log_solver_warnings: true
+    log_validation_warnings: true
+
+
+# ------------------------------------------------------------------------------
+# 16. Artifact Evaluation execution profiles
+# ------------------------------------------------------------------------------
+
+execution_profiles:
+  fast:
+    description: "Reduced-size run for AE smoke testing and core-claim validation."
+    use_cached_certificates_if_available: true
+    use_reduced_sos_grid: true
+    run_full_sdp_grid: false
+    run_all_figures: false
+    figures_to_generate:
+      - "fig6"
+      - "fig8"
+    tests_to_run:
+      - "tests/ae/test_ae_reproduce_core_claims.py"
+      - "tests/ae/test_ae_no_collision.py"
+      - "tests/ae/test_ae_no_actuator_clipping.py"
+      - "tests/ae/test_ae_dual_region_superset.py"
+      - "tests/ae/test_ae_lut_o1_lookup.py"
+    expected_runtime_minutes: 30
+
+  full:
+    description: "Complete reproduction of all experiments, figures, tables, certificates, and benchmarks."
+    use_cached_certificates_if_available: false
+    use_reduced_sos_grid: false
+    run_full_sdp_grid: true
+    run_all_figures: true
+    tests_to_run:
+      - "tests/unit"
+      - "tests/integration"
+      - "tests/regression"
+      - "tests/ae"
+    expected_runtime_hours: 6
+
+  plotting_only:
+    description: "Regenerate figures and tables from processed data."
+    require_processed_data: true
+    run_solvers: false
+    run_simulations: false
+    run_all_figures: true
+    expected_runtime_minutes: 5
+
+
+# ------------------------------------------------------------------------------
+# 17. Safety and failure policy
+# ------------------------------------------------------------------------------
+
+failure_policy:
+  fail_fast: true
+
+  on_missing_solver:
+    action: "fallback"
+    message: "Preferred solver unavailable; attempting configured fallback solver."
+
+  on_solver_inaccurate:
+    action: "warn_and_record"
+    allow_if_within_validation_tolerance: true
+
+  on_validation_failure:
+    action: "raise_error"
+
+  on_missing_reference_data:
+    action: "warn"
+    allow_regeneration: true
+
+  on_hash_mismatch:
+    action: "warn"
+    strict_release_mode_action: "raise_error"

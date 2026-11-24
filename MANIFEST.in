@@ -1,0 +1,8 @@
+include LICENSE README.md CITATION.cff requirements.txt requirements-lock.txt
+recursive-include src *.py
+recursive-include scripts *.py
+recursive-include tests *.py
+recursive-include data/raw/scenario_definitions *.csv *.yaml
+recursive-include data/reference *.json *.sha256
+recursive-include reproducibility *.md
+prune paper

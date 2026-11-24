@@ -1,0 +1,507 @@
+# ==============================================================================
+# configs/figures/fig8_time_domain_profiles.yaml
+#
+# Figure 8:
+#   Time-domain acceleration and spacing profiles under stop-and-go perturbation.
+#
+# Purpose:
+#   - Plot vehicle acceleration trajectories over time.
+#   - Plot inter-vehicle spacing trajectories over time.
+#   - Show actuator acceleration limits and collision boundary.
+#   - Validate that the PC-SRC CAV attenuates the perturbation without clipping
+#     or spacing violation.
+#
+# Upstream experiments:
+#   configs/experiments/exp_vi_c_stop_and_go.yaml
+#   configs/experiments/exp_vi_c_micro_simulation.yaml
+#
+# Expected command:
+#   python -m pcsrc.figures.fig8_time_domain_profiles \
+#       --config configs/figures/fig8_time_domain_profiles.yaml
+#
+# Alternative:
+#   python scripts/make_figures.py --figure fig8
+# ==============================================================================
+
+
+# ------------------------------------------------------------------------------
+# 1. Figure identity
+# ------------------------------------------------------------------------------
+
+figure:
+  id: "fig8_time_domain_profiles"
+  number: 8
+  name: "Time-Domain Profiles"
+  paper_section: "VI-C"
+
+  description: >
+    Displays acceleration and spacing profiles for the stop-and-go simulation.
+    The upper panel shows that the controlled CAV remains within acceleration
+    limits. The lower panel shows that inter-vehicle spacing stays above the
+    collision boundary.
+
+  upstream_experiments:
+    - id: "exp_vi_c_stop_and_go"
+      config: "configs/experiments/exp_vi_c_stop_and_go.yaml"
+    - id: "exp_vi_c_micro_simulation"
+      config: "configs/experiments/exp_vi_c_micro_simulation.yaml"
+
+  enabled: true
+
+
+# ------------------------------------------------------------------------------
+# 2. Input data
+# ------------------------------------------------------------------------------
+
+inputs:
+  acceleration_csv: "data/processed/simulations/stop_and_go_acceleration_profiles.csv"
+  spacing_csv: "data/processed/simulations/stop_and_go_spacing_profiles.csv"
+
+  optional:
+    velocity_csv: "data/processed/simulations/exp_vi_c_stop_and_go/velocity_profiles.csv"
+    control_csv: "data/processed/simulations/exp_vi_c_stop_and_go/control_profiles.csv"
+    leader_profile_csv: "data/processed/simulations/exp_vi_c_stop_and_go/leader_profile.csv"
+    safety_metrics_json: "results/metrics/exp_vi_c_stop_and_go_safety_metrics.json"
+    wave_metrics_csv: "results/metrics/exp_vi_c_stop_and_go_wave_metrics.csv"
+
+  required_columns:
+    acceleration:
+      - "time"
+      - "vehicle_index"
+      - "acceleration"
+
+    spacing:
+      - "time"
+      - "vehicle_index"
+      - "spacing"
+
+  vehicle_indices:
+    leader: 0
+    hdv1: 1
+    hdv2: 2
+    hdv3: 3
+    hdv4: 4
+    cav: 5
+
+  spacing_vehicle_indices:
+    # Spacing is defined for following vehicles relative to their predecessors.
+    hdv1: 1
+    hdv2: 2
+    hdv3: 3
+    hdv4: 4
+    cav: 5
+
+  validation:
+    require_files_exist: true
+    require_nonempty_data: true
+    require_time_monotone: true
+    require_all_vehicle_indices: true
+
+
+# ------------------------------------------------------------------------------
+# 3. Output files
+# ------------------------------------------------------------------------------
+
+outputs:
+  pdf: "results/figures/fig8_time_domain_profiles.pdf"
+  tex: "results/figures/fig8_time_domain_profiles.tex"
+  pgf: "results/figures/fig8_time_domain_profiles.pgf"
+  png: "results/figures/fig8_time_domain_profiles.png"
+
+  data_exports:
+    acceleration_pgfplots_dat: "results/figures/fig8_acceleration_profiles.dat"
+    spacing_pgfplots_dat: "results/figures/fig8_spacing_profiles.dat"
+    plotted_summary_csv: "results/figures/fig8_time_domain_profiles_summary.csv"
+
+  metadata: "results/figures/fig8_time_domain_profiles_metadata.yaml"
+
+
+# ------------------------------------------------------------------------------
+# 4. Plot type and rendering backend
+# ------------------------------------------------------------------------------
+
+rendering:
+  backend: "matplotlib"
+  plot_type: "stacked_time_profiles"
+
+  export:
+    pdf: true
+    tex: true
+    pgf: false
+    png: true
+
+  tikz:
+    enabled: true
+    library: "tikzplotlib"
+    standalone: false
+    strict: false
+    axis_width: "\\columnwidth"
+    axis_height: "0.90\\columnwidth"
+
+  pgfplots:
+    enabled: true
+    compat: "1.18"
+    groupplot: true
+    group_style:
+      group_size: "1 by 2"
+      vertical_sep: "0.35cm"
+
+
+# ------------------------------------------------------------------------------
+# 5. Layout and axes
+# ------------------------------------------------------------------------------
+
+layout:
+  rows: 2
+  cols: 1
+  share_x: true
+  height_ratios: [1.0, 1.0]
+  hspace: 0.12
+
+
+axes:
+  x:
+    variable: "time"
+    label: "Time [s]"
+    limits: [0.0, 40.0]
+    ticks: [0, 5, 10, 15, 20, 25, 30, 35, 40]
+
+  acceleration:
+    variable: "acceleration"
+    label: "Acceleration [m/s²]"
+    limits: [-3.3, 2.2]
+    ticks: [-3, -2, -1, 0, 1, 2]
+
+    actuator_limits:
+      enabled: true
+      min: -3.0
+      max: 3.0
+      line_color: "#333333"
+      line_style: "--"
+      line_width: 0.75
+      alpha: 0.80
+      label_min: "$a_{\\min}$"
+      label_max: "$a_{\\max}$"
+
+  spacing:
+    variable: "spacing"
+    label: "Spacing [m]"
+    limits: [0.0, 35.0]
+    ticks: [0, 5, 10, 15, 20, 25, 30, 35]
+
+    collision_boundary:
+      enabled: true
+      value: 0.0
+      line_color: "#D62728"
+      line_style: "-"
+      line_width: 0.80
+      alpha: 0.90
+      label: "Collision boundary"
+
+    warning_spacing:
+      enabled: true
+      value: 5.0
+      line_color: "#FF7F0E"
+      line_style: ":"
+      line_width: 0.75
+      alpha: 0.85
+      label: "Warning spacing"
+
+  labels:
+    use_math_text: true
+    pad: 2
+
+  grid:
+    enabled: true
+    alpha: 0.28
+    linestyle: "-"
+
+
+# ------------------------------------------------------------------------------
+# 6. Vehicle styling
+# ------------------------------------------------------------------------------
+
+style:
+  figure_size_inches: [3.45, 3.10]
+  dpi: 300
+
+  font:
+    family: "Times New Roman"
+    math_font: "stix"
+    size: 8
+    axis_label_size: 8
+    tick_label_size: 7
+    legend_size: 7
+
+  lines:
+    leader:
+      index: 0
+      label: "Leader"
+      color: "black"
+      linestyle: "-"
+      linewidth: 1.05
+      alpha: 0.95
+      show_in_acceleration: true
+      show_in_spacing: false
+
+    hdv1:
+      index: 1
+      label: "HDV 1"
+      color: "#666666"
+      linestyle: "--"
+      linewidth: 0.95
+      alpha: 0.90
+      show_in_acceleration: true
+      show_in_spacing: true
+
+    hdv2:
+      index: 2
+      label: "HDV 2"
+      color: "#D95F02"
+      linestyle: "--"
+      linewidth: 0.95
+      alpha: 0.90
+      show_in_acceleration: true
+      show_in_spacing: true
+
+    hdv3:
+      index: 3
+      label: "HDV 3"
+      color: "#7570B3"
+      linestyle: "--"
+      linewidth: 0.95
+      alpha: 0.90
+      show_in_acceleration: true
+      show_in_spacing: true
+
+    hdv4:
+      index: 4
+      label: "HDV 4"
+      color: "#D73027"
+      linestyle: "--"
+      linewidth: 0.95
+      alpha: 0.90
+      show_in_acceleration: true
+      show_in_spacing: true
+
+    cav:
+      index: 5
+      label: "CAV"
+      color: "#1F77B4"
+      linestyle: "-"
+      linewidth: 1.25
+      alpha: 1.00
+      show_in_acceleration: true
+      show_in_spacing: true
+      emphasize: true
+
+  legend:
+    enabled: true
+    location: "upper right"
+    font_size: 7
+    frameon: true
+    framealpha: 0.92
+    borderpad: 0.25
+    handlelength: 1.4
+
+  panel_labels:
+    enabled: true
+    labels:
+      acceleration: "(a)"
+      spacing: "(b)"
+    location: "upper left"
+    font_size: 8
+    font_weight: "normal"
+
+  title:
+    enabled: false
+    text: "Time-Domain Profiles"
+
+
+# ------------------------------------------------------------------------------
+# 7. Disturbance markers and annotations
+# ------------------------------------------------------------------------------
+
+disturbance_markers:
+  enabled: true
+
+  braking_start:
+    time: 8.0
+    label: "Brake"
+    color: "#333333"
+    linestyle: "--"
+    linewidth: 0.65
+    alpha: 0.75
+
+  recovery_start:
+    time: 16.0
+    label: "Recover"
+    color: "#333333"
+    linestyle: ":"
+    linewidth: 0.70
+    alpha: 0.75
+
+  apply_to_panels:
+    - "acceleration"
+    - "spacing"
+
+  show_labels: false
+
+
+annotations:
+  enabled: true
+
+  actuator_limits_note:
+    enabled: false
+    text: "Actuator limits"
+    xy: [31.0, -3.0]
+    xytext: [25.0, -2.4]
+    panel: "acceleration"
+    arrowprops:
+      arrowstyle: "->"
+      color: "#333333"
+      linewidth: 0.7
+
+  safety_note:
+    enabled: false
+    text: "No collision"
+    xy: [24.0, 5.0]
+    xytext: [18.0, 11.0]
+    panel: "spacing"
+    arrowprops:
+      arrowstyle: "->"
+      color: "#333333"
+      linewidth: 0.7
+
+
+# ------------------------------------------------------------------------------
+# 8. Data processing
+# ------------------------------------------------------------------------------
+
+processing:
+  time_window:
+    enabled: true
+    start: 0.0
+    end: 40.0
+
+  downsample:
+    enabled: false
+    target_dt: 0.02
+    method: "nearest"
+
+  smoothing:
+    enabled: false
+    method: "savgol"
+    window_length: 11
+    polyorder: 3
+
+  acceleration:
+    clip_for_plotting: false
+    clip_min: -3.3
+    clip_max: 2.2
+
+  spacing:
+    clip_for_plotting: false
+    clip_min: 0.0
+    clip_max: 35.0
+
+
+# ------------------------------------------------------------------------------
+# 9. Summary metrics shown or exported
+# ------------------------------------------------------------------------------
+
+summary_metrics:
+  enabled: true
+  compute_from_data: true
+
+  metrics:
+    - "min_spacing"
+    - "max_abs_acceleration"
+    - "cav_peak_abs_acceleration"
+    - "last_hdv_peak_abs_acceleration"
+    - "cav_over_last_hdv_peak_ratio"
+
+  annotate_on_plot:
+    enabled: false
+    location: "lower right"
+    text_template: "$\\min s={min_spacing:.1f}$ m"
+
+  export:
+    enabled: true
+    file: "results/figures/fig8_time_domain_profiles_summary.csv"
+
+
+# ------------------------------------------------------------------------------
+# 10. Figure validation
+# ------------------------------------------------------------------------------
+
+validation:
+  enabled: true
+
+  checks:
+    input_files:
+      enabled: true
+      required:
+        - "data/processed/simulations/stop_and_go_acceleration_profiles.csv"
+        - "data/processed/simulations/stop_and_go_spacing_profiles.csv"
+
+    required_columns:
+      enabled: true
+      acceleration:
+        - "time"
+        - "vehicle_index"
+        - "acceleration"
+      spacing:
+        - "time"
+        - "vehicle_index"
+        - "spacing"
+
+    vehicle_indices:
+      enabled: true
+      acceleration_required_values: [0, 1, 2, 3, 4, 5]
+      spacing_required_values: [1, 2, 3, 4, 5]
+
+    time_range:
+      enabled: true
+      min_time: 0.0
+      max_time: 40.0
+      tolerance: 1.0e-9
+
+    physical_bounds:
+      enabled: true
+      acceleration_min_allowed: -3.000001
+      acceleration_max_allowed: 3.000001
+      spacing_min_strictly_greater_than: 0.0
+
+    output_files:
+      enabled: true
+      required:
+        - "results/figures/fig8_time_domain_profiles.pdf"
+        - "results/figures/fig8_time_domain_profiles.tex"
+
+  tolerances:
+    time_match: 1.0e-9
+    vehicle_index_match: 0
+    spacing_positive: 1.0e-9
+
+
+# ------------------------------------------------------------------------------
+# 11. Reproducibility metadata
+# ------------------------------------------------------------------------------
+
+metadata:
+  write: true
+  include:
+    - "figure_id"
+    - "input_file_hashes"
+    - "config_hash"
+    - "git_commit"
+    - "python_version"
+    - "matplotlib_version"
+    - "tikzplotlib_version"
+    - "timestamp_utc"
+
+  notes: >
+    This figure is generated from processed stop-and-go simulation trajectories.
+    The figure script does not run the micro-simulation and only performs
+    filtering, plotting, optional summary metric calculation, and export.

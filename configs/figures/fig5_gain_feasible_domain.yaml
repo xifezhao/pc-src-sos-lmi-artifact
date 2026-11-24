@@ -1,0 +1,365 @@
+# ==============================================================================
+# configs/figures/fig5_gain_feasible_domain.yaml
+#
+# Figure 5:
+#   3D feasible gain domain under delay mismatch uncertainty.
+#
+# Purpose:
+#   - Render the 3D feasible controller-gain domain over {kp, kv, ka}.
+#   - Show contraction of the certified feasible region as delta_max increases.
+#   - Load post-processed convex hull data from Experiment VI-A.
+#
+# Upstream experiment:
+#   configs/experiments/exp_vi_a_feasibility_domain.yaml
+#
+# Expected command:
+#   python -m pcsrc.figures.fig5_gain_feasible_domain \
+#       --config configs/figures/fig5_gain_feasible_domain.yaml
+#
+# Alternative:
+#   python scripts/make_figures.py --figure fig5
+# ==============================================================================
+
+
+# ------------------------------------------------------------------------------
+# 1. Figure identity
+# ------------------------------------------------------------------------------
+
+figure:
+  id: "fig5_gain_feasible_domain"
+  number: 5
+  name: "3D Gain Feasible Domain"
+  paper_section: "VI-A"
+
+  description: >
+    Visualizes the certified 3D gain feasible domain over kp, kv, and ka for
+    multiple delay mismatch bounds. The nested surfaces illustrate monotonic
+    contraction of the robustly feasible region as uncertainty increases.
+
+  upstream_experiment:
+    id: "exp_vi_a_feasibility_domain"
+    config: "configs/experiments/exp_vi_a_feasibility_domain.yaml"
+
+  enabled: true
+
+
+# ------------------------------------------------------------------------------
+# 2. Input data
+# ------------------------------------------------------------------------------
+
+inputs:
+  figure_data_csv: "data/processed/feasibility_grid/fig5_gain_feasible_domain.csv"
+  hulls_json: "data/processed/feasibility_grid/fig5_hulls.json"
+
+  optional:
+    vertices_dat: "results/figures/fig5_gain_feasible_domain_vertices.dat"
+    hull_metrics_csv: "data/processed/feasibility_grid/exp_vi_a/hull_metrics.csv"
+    volume_metrics_csv: "results/metrics/exp_vi_a_volume_metrics.csv"
+
+  required_columns:
+    - "kp"
+    - "kv"
+    - "ka"
+    - "delta_max"
+    - "certificate_type"
+    - "feasible"
+
+  filters:
+    certificate_type: "dual"
+    feasible: true
+
+  delta_slices:
+    - 0.02
+    - 0.08
+    - 0.14
+
+  validation:
+    require_files_exist: true
+    require_nonempty_data: true
+    require_all_delta_slices_present: true
+    minimum_points_per_slice: 4
+
+
+# ------------------------------------------------------------------------------
+# 3. Output files
+# ------------------------------------------------------------------------------
+
+outputs:
+  pdf: "results/figures/fig5_gain_feasible_domain.pdf"
+  tex: "results/figures/fig5_gain_feasible_domain.tex"
+  pgf: "results/figures/fig5_gain_feasible_domain.pgf"
+  png: "results/figures/fig5_gain_feasible_domain.png"
+
+  data_exports:
+    pgfplots_vertices: "results/figures/fig5_gain_feasible_domain_vertices.dat"
+    plotted_hull_summary: "results/figures/fig5_gain_feasible_domain_plotted_hulls.csv"
+
+  metadata: "results/figures/fig5_gain_feasible_domain_metadata.yaml"
+
+
+# ------------------------------------------------------------------------------
+# 4. Plot type and rendering backend
+# ------------------------------------------------------------------------------
+
+rendering:
+  backend: "matplotlib"
+  plot_type: "3d_convex_hull"
+
+  export:
+    pdf: true
+    tex: true
+    pgf: false
+    png: true
+
+  tikz:
+    enabled: true
+    library: "tikzplotlib"
+    standalone: false
+    strict: false
+    axis_width: "\\columnwidth"
+    axis_height: "0.82\\columnwidth"
+
+  pgfplots:
+    enabled: true
+    compat: "1.18"
+    view: "{125}{28}"
+    shader: "faceted interp"
+    z_buffer: "sort"
+
+
+# ------------------------------------------------------------------------------
+# 5. Axes
+# ------------------------------------------------------------------------------
+
+axes:
+  x:
+    variable: "kp"
+    label: "$k_p$"
+    limits: [0.10, 2.60]
+    ticks: [0.5, 1.0, 1.5, 2.0, 2.5]
+
+  y:
+    variable: "kv"
+    label: "$k_v$"
+    limits: [0.10, 3.00]
+    ticks: [0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
+
+  z:
+    variable: "ka"
+    label: "$k_a$"
+    limits: [0.00, 1.25]
+    ticks: [0.0, 0.25, 0.50, 0.75, 1.00, 1.25]
+
+  labels:
+    use_math_text: true
+    pad: 2
+
+  grid:
+    enabled: true
+    alpha: 0.30
+    linestyle: "-"
+
+
+# ------------------------------------------------------------------------------
+# 6. Camera / view
+# ------------------------------------------------------------------------------
+
+view:
+  azimuth: 125
+  elevation: 28
+  roll: 0
+
+  box_aspect:
+    kp: 1.0
+    kv: 1.0
+    ka: 0.75
+
+  projection: "persp"
+
+
+# ------------------------------------------------------------------------------
+# 7. Surface styling
+# ------------------------------------------------------------------------------
+
+style:
+  figure_size_inches: [3.45, 3.00]
+  dpi: 300
+
+  font:
+    family: "Times New Roman"
+    math_font: "stix"
+    size: 8
+    axis_label_size: 8
+    tick_label_size: 7
+    legend_size: 7
+
+  surfaces:
+    - delta_max: 0.02
+      label: "$\\delta_{\\max}=0.02$"
+      color: "#2CA02C"
+      face_alpha: 0.23
+      edge_color: "#1B7F1B"
+      edge_alpha: 0.60
+      line_width: 0.35
+      z_order: 3
+
+    - delta_max: 0.08
+      label: "$\\delta_{\\max}=0.08$"
+      color: "#1F77B4"
+      face_alpha: 0.35
+      edge_color: "#0B4F8A"
+      edge_alpha: 0.70
+      line_width: 0.35
+      z_order: 2
+
+    - delta_max: 0.14
+      label: "$\\delta_{\\max}=0.14$"
+      color: "#D62728"
+      face_alpha: 0.50
+      edge_color: "#8C1D18"
+      edge_alpha: 0.80
+      line_width: 0.35
+      z_order: 1
+
+  scatter_overlay:
+    enabled: false
+    marker: "."
+    marker_size: 2.0
+    alpha: 0.25
+
+  nominal_gain_marker:
+    enabled: true
+    kp: 1.15
+    kv: 1.18
+    ka: 0.61
+    marker: "o"
+    size: 18
+    color: "black"
+    edge_color: "white"
+    label: "Nominal gain"
+
+  legend:
+    enabled: true
+    location: "upper right"
+    frameon: true
+    framealpha: 0.90
+    borderpad: 0.25
+    handlelength: 1.2
+
+  title:
+    enabled: false
+    text: "Feasible Gain Domain"
+
+
+# ------------------------------------------------------------------------------
+# 8. Convex hull construction
+# ------------------------------------------------------------------------------
+
+convex_hull:
+  source: "precomputed_or_recompute"
+  preferred_source: "hulls_json"
+
+  recompute_if_missing: true
+  method: "scipy_spatial_convhull"
+  qhull_options: "QJ"
+
+  dimensions:
+    - "kp"
+    - "kv"
+    - "ka"
+
+  minimum_points_required: 4
+
+  cleanup:
+    drop_duplicate_points: true
+    duplicate_tolerance: 1.0e-10
+    sort_vertices: true
+
+  validation:
+    require_positive_volume: true
+    minimum_facets: 4
+
+
+# ------------------------------------------------------------------------------
+# 9. Annotations
+# ------------------------------------------------------------------------------
+
+annotations:
+  enabled: true
+
+  uncertainty_arrow:
+    enabled: true
+    text: "Increasing uncertainty"
+    from_delta: 0.02
+    to_delta: 0.14
+    position_3d:
+      start: [2.25, 2.65, 1.10]
+      end: [1.70, 2.05, 0.85]
+    color: "#333333"
+    line_width: 0.8
+
+  caption_note:
+    enabled: false
+    text: "Feasible region shrinks as delay mismatch grows."
+
+
+# ------------------------------------------------------------------------------
+# 10. Figure validation
+# ------------------------------------------------------------------------------
+
+validation:
+  enabled: true
+
+  checks:
+    input_files:
+      enabled: true
+      required:
+        - "data/processed/feasibility_grid/fig5_gain_feasible_domain.csv"
+        - "data/processed/feasibility_grid/fig5_hulls.json"
+
+    delta_slices:
+      enabled: true
+      required_values:
+        - 0.02
+        - 0.08
+        - 0.14
+
+    hulls:
+      enabled: true
+      require_positive_volume: true
+      require_nested_volume_order: true
+      expected_volume_order:
+        - 0.02
+        - 0.08
+        - 0.14
+
+    output_files:
+      enabled: true
+      required:
+        - "results/figures/fig5_gain_feasible_domain.pdf"
+        - "results/figures/fig5_gain_feasible_domain.tex"
+
+  tolerances:
+    delta_match: 1.0e-9
+    volume_order: 1.0e-10
+
+
+# ------------------------------------------------------------------------------
+# 11. Reproducibility metadata
+# ------------------------------------------------------------------------------
+
+metadata:
+  write: true
+  include:
+    - "figure_id"
+    - "input_file_hashes"
+    - "config_hash"
+    - "git_commit"
+    - "python_version"
+    - "matplotlib_version"
+    - "tikzplotlib_version"
+    - "timestamp_utc"
+
+  notes: >
+    This figure is generated from post-processed convex hull data produced by
+    Experiment VI-A. The figure script does not run the SOS-LMI solver.

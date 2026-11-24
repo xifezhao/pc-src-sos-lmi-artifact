@@ -1,0 +1,8 @@
+controller_code,controller,tail_attenuation_ratio,tail_abs_ratio,peak_decel_mps2,max_accel_followers_mps2,min_spacing_gap_m,tracking_rmse_m,collision_nominal,stress_min_gap_m,stress_collision,stress_safety_breach_s0
+pcsrc,PC-SRC (Proposed),0.4994,0.4994,-1.77,1.578,15.25,0.192,False,1.76,False,True
+no_pred_same,No Predictor (Same Gains),0.5889,0.5889,-1.813,1.596,15.19,0.12,False,1.66,False,True
+no_pred_std,No Predictor (Standard CACC),2.1477,2.1477,-4.295,1.853,13.97,0.564,False,1.2,False,True
+classic_smith,Classical Smith Predictor,1.4086,1.4086,-2.817,1.712,14.35,0.542,False,-2.36,True,True
+pade,Pade [1/1] Predictor,1.1414,1.1414,-2.283,1.707,14.53,0.425,False,-0.36,True,True
+h_inf,Robust H_inf Feedback,0.6738,0.6738,-1.857,1.643,14.98,0.172,False,1.71,False,True
+deep_lcc,Data-Driven DeeP-LCC,0.6449,0.6449,-1.843,1.627,15.06,0.15,False,1.71,False,True

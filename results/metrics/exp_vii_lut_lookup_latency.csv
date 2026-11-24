@@ -1,0 +1,2 @@
+n_queries,mean_us,p50_us,p99_us,max_us,memory_bytes
+10000,0.412,0.375,0.542,32.375,576

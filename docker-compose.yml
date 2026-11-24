@@ -1,0 +1,7 @@
+version: '3.8'
+services:
+  pcsrc:
+    build: .
+    volumes:
+      - .:/app
+    command: make test

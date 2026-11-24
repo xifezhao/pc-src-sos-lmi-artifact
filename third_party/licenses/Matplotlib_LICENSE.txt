@@ -1,0 +1,1 @@
+Matplotlib is distributed under the Matplotlib License (PSF-based open-source license, https://matplotlib.org/stable/project/license.html).

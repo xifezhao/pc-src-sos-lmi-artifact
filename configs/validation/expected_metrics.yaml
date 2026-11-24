@@ -1,0 +1,729 @@
+# ==============================================================================
+# configs/validation/expected_metrics.yaml
+#
+# Expected numerical metrics and pass/fail criteria for paper reproduction.
+#
+# Purpose:
+#   - Define expected metric ranges for each experiment and generated figure.
+#   - Validate SOS-LMI feasibility-domain statistics, structural conservatism
+#     improvements, stop-and-go attenuation, safety margins, and LUT deployment.
+#   - Separate numerical acceptance criteria from experiment implementation code.
+#
+# Usage examples:
+#   python -m pcsrc.validation.check_expected_metrics \
+#       --metrics configs/validation/expected_metrics.yaml \
+#       --tolerances configs/validation/tolerances.yaml
+#
+#   python -m pcsrc.validation.run_checks \
+#       --tolerances configs/validation/tolerances.yaml \
+#       --golden-hashes configs/validation/golden_hashes.yaml \
+#       --expected-metrics configs/validation/expected_metrics.yaml
+#
+# Notes:
+#   - Ranges are intentionally specified as acceptance intervals instead of exact
+#     scalar equality because SDP solvers and plotting/data-export backends can
+#     introduce small platform-dependent differences.
+#   - Replace TO_BE_FILLED_* placeholders with canonical values after the paper
+#     reproduction pipeline has been run once using the paper profile.
+# ==============================================================================
+
+
+# ------------------------------------------------------------------------------
+# 1. Metadata
+# ------------------------------------------------------------------------------
+
+metadata:
+  id: "pcsrc_expected_metrics"
+  version: "1.0.0"
+
+  description: >
+    Expected numerical validation metrics for PC-SRC experiments, figures, and
+    LUT deployment artifacts.
+
+  default_profile: "paper"
+  tolerance_config: "configs/validation/tolerances.yaml"
+  golden_hash_config: "configs/validation/golden_hashes.yaml"
+
+  generated_by:
+    command: >
+      python -m pcsrc.validation.generate_expected_metrics
+      --experiments all
+      --figures all
+      --profile paper
+      --output configs/validation/expected_metrics.yaml
+    canonical_solver: "mosek"
+    canonical_profile: "paper"
+
+  created_utc: "TO_BE_FILLED_TIMESTAMP_UTC"
+  git_commit: "TO_BE_FILLED_GIT_COMMIT"
+  release_tag: "TO_BE_FILLED_RELEASE_TAG"
+
+  placeholder_policy:
+    allow_placeholders_in_development: true
+    allow_placeholders_in_release: false
+    placeholder_prefixes:
+      - "TO_BE_FILLED_"
+
+
+# ------------------------------------------------------------------------------
+# 2. Global acceptance policy
+# ------------------------------------------------------------------------------
+
+acceptance_policy:
+  default_mode: "range"
+  fail_on_missing_required_metric: true
+  warn_on_missing_optional_metric: true
+  fail_on_nan_or_inf: true
+
+  profiles:
+    paper:
+      description: "Canonical paper reproduction profile."
+      tolerance_profile: "default"
+      require_all_required_metrics: true
+      allow_placeholder_values: false
+
+    strict:
+      description: "Strict validation profile for deterministic CI with MOSEK."
+      tolerance_profile: "strict"
+      require_all_required_metrics: true
+      allow_placeholder_values: false
+
+    relaxed:
+      description: "Relaxed validation for noncanonical solvers or laptops doing their best."
+      tolerance_profile: "relaxed"
+      require_all_required_metrics: true
+      allow_placeholder_values: true
+
+    ci_smoke:
+      description: "Reduced checks used in fast CI smoke tests."
+      tolerance_profile: "relaxed"
+      require_all_required_metrics: false
+      allow_placeholder_values: true
+
+
+# ------------------------------------------------------------------------------
+# 3. Common expected physical and controller values
+# ------------------------------------------------------------------------------
+
+common:
+  physical:
+    acceleration_min:
+      expected: -3.0
+      abs_tol: 1.0e-12
+      required: true
+
+    acceleration_max:
+      expected: 3.0
+      abs_tol: 1.0e-12
+      required: true
+
+    collision_boundary:
+      expected: 0.0
+      abs_tol: 1.0e-12
+      required: true
+
+  controller_nominal:
+    kp:
+      expected: 1.15
+      abs_tol: 1.0e-9
+      required: true
+
+    kv:
+      expected: 1.18
+      abs_tol: 1.0e-9
+      required: true
+
+    ka:
+      expected: 0.61
+      abs_tol: 1.0e-9
+      required: true
+
+  delay_nominal:
+    tau_c:
+      expected: 0.18
+      abs_tol: 1.0e-9
+      required: true
+
+    tau_e:
+      expected: 0.35
+      abs_tol: 1.0e-9
+      required: true
+
+    delta_max:
+      expected: 0.08
+      abs_tol: 1.0e-9
+      required: true
+
+
+# ------------------------------------------------------------------------------
+# 4. Experiment VI-A expected metrics
+# ------------------------------------------------------------------------------
+
+experiments:
+  exp_vi_a_feasibility_domain:
+    description: >
+      Validates the certified gain-domain volume across uncertainty levels and
+      ensures the dual-certificate formulation preserves or enlarges feasible
+      regions relative to the monolithic baseline.
+
+    required_outputs:
+      - "data/processed/feasibility_grid/fig5_gain_feasible_domain.csv"
+      - "results/metrics/exp_vi_a_volume_metrics.csv"
+
+    grid:
+      expected_total_grid_points:
+        expected: 9261
+        abs_tol: 0
+        required: true
+
+      expected_delta_slices:
+        expected_values: [0.04, 0.08, 0.12]
+        abs_tol: 1.0e-9
+        required: true
+
+    feasibility:
+      dual_feasible_count:
+        min: 1
+        max: 9261
+        required: true
+
+      monolithic_feasible_count:
+        min: 1
+        max: 9261
+        required: true
+
+      dual_over_monolithic_volume_ratio:
+        min: 1.00
+        max: 5.00
+        required: true
+
+      nested_uncertainty_order:
+        description: "Certified volume should not increase as delta_max grows."
+        require_nonincreasing_volume_with_delta: true
+        tolerance: 1.0e-10
+        required: true
+
+    certificate_quality:
+      max_primal_residual:
+        max: 1.0e-6
+        required: true
+
+      max_dual_residual:
+        max: 1.0e-6
+        required: true
+
+      min_lmi_eigenvalue:
+        min: -1.0e-7
+        required: true
+
+
+  exp_vi_b_delay_robustness:
+    description: >
+      Validates the fixed-gain delay-robustness slice and checks that the
+      dual-certificate certified area is at least modestly larger than the
+      monolithic certified area.
+
+    required_outputs:
+      - "data/processed/feasibility_grid/fig6_ka08_slice.csv"
+      - "results/metrics/exp_vi_b_area_metrics.csv"
+
+    grid:
+      expected_tau_c_points:
+        expected: 81
+        abs_tol: 0
+        required: true
+
+      expected_tau_e_points:
+        expected: 81
+        abs_tol: 0
+        required: true
+
+      expected_total_grid_points:
+        expected: 6561
+        abs_tol: 0
+        required: true
+
+      fixed_gain:
+        kp:
+          expected: 1.15
+          abs_tol: 1.0e-9
+          required: true
+        kv:
+          expected: 1.18
+          abs_tol: 1.0e-9
+          required: true
+        ka:
+          expected: 0.80
+          abs_tol: 1.0e-9
+          required: true
+
+    robustness_area:
+      dual_area:
+        min: 1.0e-6
+        max: 0.16
+        required: true
+
+      monolithic_area:
+        min: 1.0e-6
+        max: 0.16
+        required: true
+
+      dual_over_monolithic_area_ratio:
+        min: 1.05
+        max: 5.00
+        required: true
+
+      newly_certified_area:
+        min: 0.0
+        max: 0.16
+        required: true
+
+    certificate_quality:
+      max_primal_residual:
+        max: 1.0e-6
+        required: true
+
+      max_dual_residual:
+        max: 1.0e-6
+        required: true
+
+
+  exp_vi_c_stop_and_go:
+    description: >
+      Validates the stop-and-go time-domain simulation: acceleration constraints,
+      no spacing violation, and downstream perturbation attenuation at the CAV.
+
+    required_outputs:
+      - "data/processed/simulations/stop_and_go_acceleration_profiles.csv"
+      - "data/processed/simulations/stop_and_go_spacing_profiles.csv"
+      - "data/processed/simulations/space_time_acceleration_heatmap.csv"
+      - "results/metrics/exp_vi_c_stop_and_go_wave_metrics.csv"
+
+    simulation:
+      t_start:
+        expected: 0.0
+        abs_tol: 1.0e-12
+        required: true
+
+      t_end:
+        expected: 40.0
+        abs_tol: 1.0e-9
+        required: true
+
+      vehicle_count:
+        expected: 6
+        abs_tol: 0
+        required: true
+
+      follower_count:
+        expected: 5
+        abs_tol: 0
+        required: true
+
+    safety:
+      min_spacing:
+        min: 0.001
+        max: 100.0
+        required: true
+
+      collision_count:
+        expected: 0
+        abs_tol: 0
+        required: true
+
+      max_abs_acceleration:
+        max: 3.000001
+        required: true
+
+      cav_peak_abs_acceleration:
+        max: 3.000001
+        required: true
+
+    attenuation:
+      cav_peak_over_last_hdv_peak:
+        min: 0.0
+        max: 0.70
+        required: true
+
+      cav_rms_over_last_hdv_rms:
+        min: 0.0
+        max: 0.80
+        required: true
+
+      require_cav_peak_less_than_last_hdv:
+        expected: true
+        required: true
+
+    data_shape:
+      acceleration_vehicle_indices:
+        expected_values: [0, 1, 2, 3, 4, 5]
+        required: true
+
+      spacing_vehicle_indices:
+        expected_values: [1, 2, 3, 4, 5]
+        required: true
+
+
+  exp_vi_c_micro_simulation:
+    description: >
+      Alias/check group for the micro-simulation runner used by Fig. 7 and Fig. 8.
+      The expected metrics mirror exp_vi_c_stop_and_go when both configs point to
+      the same processed outputs.
+
+    inherit_metrics_from: "exp_vi_c_stop_and_go"
+    required_outputs:
+      - "data/processed/simulations/stop_and_go_acceleration_profiles.csv"
+      - "data/processed/simulations/stop_and_go_spacing_profiles.csv"
+
+
+  exp_vii_lut_deployment:
+    description: >
+      Validates that the certified LUT has expected dimensions, complete cells,
+      integrity metadata, bounded memory footprint, and deterministic constant-time
+      lookup behavior.
+
+    required_outputs:
+      - "data/processed/lut/certified_gain_lut.csv"
+      - "data/processed/lut/certified_gain_lut.npz"
+      - "data/processed/lut/lut_metadata.yaml"
+      - "data/processed/lut/lut_hash.sha256"
+      - "results/metrics/exp_vii_lut_lookup_latency.csv"
+      - "results/metrics/exp_vii_lut_memory_footprint.json"
+
+    grid:
+      tau_c_points:
+        expected: 9
+        abs_tol: 0
+        required: true
+
+      tau_e_points:
+        expected: 9
+        abs_tol: 0
+        required: true
+
+      delta_points:
+        expected: 9
+        abs_tol: 0
+        required: true
+
+      expected_cells:
+        expected: 729
+        abs_tol: 0
+        required: true
+
+      gain_dimension:
+        expected: 3
+        abs_tol: 0
+        required: true
+
+    integrity:
+      sha256_length:
+        expected: 64
+        abs_tol: 0
+        required: true
+
+      hash_verified:
+        expected: true
+        required: true
+
+      no_empty_cells:
+        expected: true
+        required: true
+
+    runtime:
+      mean_lookup_time_us:
+        min: 0.0
+        max: 100.0
+        required: true
+
+      p99_lookup_time_us:
+        min: 0.0
+        max: 250.0
+        required: true
+
+      lookup_complexity:
+        expected: "O(1)"
+        required: true
+
+    memory:
+      total_kb:
+        min: 0.0
+        max: 512.0
+        required: true
+
+
+# ------------------------------------------------------------------------------
+# 5. Figure expected metrics
+# ------------------------------------------------------------------------------
+
+figures:
+  fig5_gain_feasible_domain:
+    description: "Validates Fig. 5 feasible-domain plot outputs and source data."
+
+    required_outputs:
+      - "results/figures/fig5_gain_feasible_domain.pdf"
+      - "results/figures/fig5_gain_feasible_domain.tex"
+
+    plot:
+      expected_delta_slices:
+        expected_values: [0.04, 0.08, 0.12]
+        required: true
+
+      expected_axes:
+        x: "kp"
+        y: "kv"
+        z: "ka"
+
+      min_pdf_size_bytes:
+        min: 1024
+        required: true
+
+      min_tex_size_bytes:
+        min: 512
+        required: true
+
+
+  fig6_structural_conservatism:
+    description: "Validates Fig. 6 delay-robustness contour plot."
+
+    required_outputs:
+      - "results/figures/fig6_structural_conservatism.pdf"
+      - "results/figures/fig6_structural_conservatism.tex"
+
+    plot:
+      x_variable:
+        expected: "tau_c"
+        required: true
+
+      y_variable:
+        expected: "tau_e"
+        required: true
+
+      dual_over_monolithic_area_ratio:
+        min: 1.05
+        max: 5.00
+        required: true
+
+      min_pdf_size_bytes:
+        min: 1024
+        required: true
+
+      min_tex_size_bytes:
+        min: 512
+        required: true
+
+
+  fig7_space_time_heatmap:
+    description: "Validates Fig. 7 space-time acceleration heatmap."
+
+    required_outputs:
+      - "results/figures/fig7_space_time_heatmap.pdf"
+      - "results/figures/fig7_space_time_heatmap.tex"
+
+    plot:
+      x_variable:
+        expected: "time"
+        required: true
+
+      y_variable:
+        expected: "vehicle_index"
+        required: true
+
+      color_variable:
+        expected: "acceleration"
+        required: true
+
+      vehicle_indices:
+        expected_values: [0, 1, 2, 3, 4, 5]
+        required: true
+
+      time_range:
+        expected: [0.0, 40.0]
+        abs_tol: 1.0e-9
+        required: true
+
+      color_limits:
+        expected: [-3.0, 2.0]
+        abs_tol: 1.0e-9
+        required: true
+
+      min_pdf_size_bytes:
+        min: 1024
+        required: true
+
+      min_tex_size_bytes:
+        min: 512
+        required: true
+
+
+  fig8_time_domain_profiles:
+    description: "Validates Fig. 8 acceleration and spacing time-domain profiles."
+
+    required_outputs:
+      - "results/figures/fig8_time_domain_profiles.pdf"
+      - "results/figures/fig8_time_domain_profiles.tex"
+
+    plot:
+      panel_count:
+        expected: 2
+        abs_tol: 0
+        required: true
+
+      x_variable:
+        expected: "time"
+        required: true
+
+      acceleration_variable:
+        expected: "acceleration"
+        required: true
+
+      spacing_variable:
+        expected: "spacing"
+        required: true
+
+      acceleration_limits:
+        expected: [-3.0, 3.0]
+        abs_tol: 1.0e-9
+        required: true
+
+      spacing_collision_boundary:
+        expected: 0.0
+        abs_tol: 1.0e-12
+        required: true
+
+      min_pdf_size_bytes:
+        min: 1024
+        required: true
+
+      min_tex_size_bytes:
+        min: 512
+        required: true
+
+
+  fig9_lut_deployment_architecture:
+    description: "Validates Fig. 9 LUT deployment architecture diagram."
+
+    required_outputs:
+      - "results/figures/fig9_lut_deployment_architecture.pdf"
+      - "results/figures/fig9_lut_deployment_architecture.tex"
+
+    diagram:
+      required_nodes:
+        expected_values:
+          - "offline_synthesis"
+          - "dual_certificate"
+          - "lut_builder"
+          - "lut_artifact"
+          - "hash_integrity"
+          - "edge_controller"
+          - "pcsrc_control"
+        required: true
+
+      required_edges:
+        expected_values:
+          - "synthesis_to_certificate"
+          - "certificate_to_builder"
+          - "builder_to_lut"
+          - "lut_to_hash"
+          - "hash_to_edge"
+          - "edge_to_pcsrc"
+        required: true
+
+      lane_count:
+        expected: 3
+        abs_tol: 0
+        required: true
+
+      min_pdf_size_bytes:
+        min: 1024
+        required: true
+
+      min_tex_size_bytes:
+        min: 512
+        required: true
+
+
+# ------------------------------------------------------------------------------
+# 6. Cross-experiment consistency checks
+# ------------------------------------------------------------------------------
+
+cross_checks:
+  enabled: true
+
+  checks:
+    nominal_gain_consistency:
+      description: "All experiments using nominal gain should agree on kp, kv, ka."
+      required: true
+      fields:
+        - "controller_nominal.kp"
+        - "controller_nominal.kv"
+        - "controller_nominal.ka"
+      expected:
+        kp: 1.15
+        kv: 1.18
+        ka: 0.61
+      abs_tol: 1.0e-9
+
+    delay_nominal_consistency:
+      description: "Default delay values should remain consistent across configs."
+      required: true
+      expected:
+        tau_c: 0.18
+        tau_e: 0.35
+        delta_max: 0.08
+      abs_tol: 1.0e-9
+
+    fig7_fig8_data_consistency:
+      description: >
+        Fig. 7 heatmap and Fig. 8 acceleration panel should be generated from
+        consistent acceleration profiles.
+      required: true
+      compare:
+        left: "data/processed/simulations/space_time_acceleration_heatmap.csv"
+        right: "data/processed/simulations/stop_and_go_acceleration_profiles.csv"
+        key_columns: ["time", "vehicle_index"]
+        value_column: "acceleration"
+      abs_tol: 1.0e-9
+      rel_tol: 1.0e-8
+
+    lut_certificate_consistency:
+      description: >
+        Every LUT certificate_id should map to an existing dual-certificate
+        provenance record.
+      required: true
+      compare:
+        lut_file: "data/processed/lut/certified_gain_lut.csv"
+        certificate_index: "certificates/dual_certificate/lut_cell_certificate_index.csv"
+        key_column: "certificate_id"
+
+
+# ------------------------------------------------------------------------------
+# 7. Reporting
+# ------------------------------------------------------------------------------
+
+reporting:
+  output:
+    json: "results/validation/expected_metrics_report.json"
+    markdown: "results/validation/expected_metrics_report.md"
+    junit_xml: "results/validation/expected_metrics_junit.xml"
+
+  include:
+    passed_metrics: true
+    failed_metrics: true
+    skipped_metrics: true
+    warnings: true
+    profile: true
+    tolerance_resolution: true
+
+  summary_thresholds:
+    minimum_pass_rate:
+      paper: 1.00
+      strict: 1.00
+      relaxed: 0.95
+      ci_smoke: 0.80
+
+    max_warnings:
+      paper: 0
+      strict: 0
+      relaxed: 10
+      ci_smoke: 20

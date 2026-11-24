@@ -1,0 +1,365 @@
+# ==============================================================================
+# configs/figures/fig7_space_time_heatmap.yaml
+#
+# Figure 7:
+#   Space-time acceleration heatmap under stop-and-go perturbation.
+#
+# Purpose:
+#   - Render the space-time acceleration response of the mixed platoon.
+#   - Visualize propagation of the leader-induced stop-and-go wave.
+#   - Show attenuation near the downstream PC-SRC controlled CAV.
+#
+# Upstream experiment:
+#   configs/experiments/exp_vi_c_stop_and_go.yaml
+#   configs/experiments/exp_vi_c_micro_simulation.yaml
+#
+# Expected command:
+#   python -m pcsrc.figures.fig7_space_time_heatmap \
+#       --config configs/figures/fig7_space_time_heatmap.yaml
+#
+# Alternative:
+#   python scripts/make_figures.py --figure fig7
+# ==============================================================================
+
+
+# ------------------------------------------------------------------------------
+# 1. Figure identity
+# ------------------------------------------------------------------------------
+
+figure:
+  id: "fig7_space_time_heatmap"
+  number: 7
+  name: "Space-Time Acceleration Heatmap"
+  paper_section: "VI-C"
+
+  description: >
+    Plots the acceleration response over time and vehicle index for the
+    stop-and-go mixed-platoon simulation. The heatmap highlights wave propagation
+    through HDVs and attenuation by the certified PC-SRC CAV.
+
+  upstream_experiments:
+    - id: "exp_vi_c_stop_and_go"
+      config: "configs/experiments/exp_vi_c_stop_and_go.yaml"
+    - id: "exp_vi_c_micro_simulation"
+      config: "configs/experiments/exp_vi_c_micro_simulation.yaml"
+
+  enabled: true
+
+
+# ------------------------------------------------------------------------------
+# 2. Input data
+# ------------------------------------------------------------------------------
+
+inputs:
+  heatmap_csv: "data/processed/simulations/space_time_acceleration_heatmap.csv"
+
+  optional:
+    full_state_csv: "data/processed/simulations/exp_vi_c_stop_and_go/full_state_trajectory.csv"
+    leader_profile_csv: "data/processed/simulations/exp_vi_c_stop_and_go/leader_profile.csv"
+    wave_metrics_csv: "results/metrics/exp_vi_c_stop_and_go_wave_metrics.csv"
+    simulation_metrics_json: "results/metrics/exp_vi_c_stop_and_go_simulation_metrics.json"
+
+  required_columns:
+    - "time"
+    - "vehicle_index"
+    - "acceleration"
+
+  vehicle_indices:
+    leader: 0
+    hdv1: 1
+    hdv2: 2
+    hdv3: 3
+    hdv4: 4
+    cav: 5
+
+  validation:
+    require_files_exist: true
+    require_nonempty_data: true
+    require_all_vehicle_indices: true
+    require_time_monotone: true
+    require_rectangular_grid: true
+
+
+# ------------------------------------------------------------------------------
+# 3. Output files
+# ------------------------------------------------------------------------------
+
+outputs:
+  pdf: "results/figures/fig7_space_time_heatmap.pdf"
+  tex: "results/figures/fig7_space_time_heatmap.tex"
+  pgf: "results/figures/fig7_space_time_heatmap.pgf"
+  png: "results/figures/fig7_space_time_heatmap.png"
+
+  data_exports:
+    heatmap_matrix_csv: "results/figures/fig7_space_time_heatmap_matrix.csv"
+    pgfplots_matrix_dat: "results/figures/fig7_space_time_heatmap_matrix.dat"
+    plotted_summary_csv: "results/figures/fig7_space_time_heatmap_summary.csv"
+
+  metadata: "results/figures/fig7_space_time_heatmap_metadata.yaml"
+
+
+# ------------------------------------------------------------------------------
+# 4. Plot type and rendering backend
+# ------------------------------------------------------------------------------
+
+rendering:
+  backend: "matplotlib"
+  plot_type: "space_time_heatmap"
+
+  export:
+    pdf: true
+    tex: true
+    pgf: false
+    png: true
+
+  tikz:
+    enabled: true
+    library: "tikzplotlib"
+    standalone: false
+    strict: false
+    axis_width: "\\columnwidth"
+    axis_height: "0.70\\columnwidth"
+
+  pgfplots:
+    enabled: true
+    compat: "1.18"
+    matrix_plot: true
+    colormap_name: "RdBu_r"
+
+
+# ------------------------------------------------------------------------------
+# 5. Axes
+# ------------------------------------------------------------------------------
+
+axes:
+  x:
+    variable: "time"
+    label: "Time [s]"
+    limits: [0.0, 40.0]
+    ticks: [0, 5, 10, 15, 20, 25, 30, 35, 40]
+
+  y:
+    variable: "vehicle_index"
+    label: "Vehicle index"
+    limits: [-0.5, 5.5]
+    ticks: [0, 1, 2, 3, 4, 5]
+    tick_labels:
+      - "Leader"
+      - "HDV 1"
+      - "HDV 2"
+      - "HDV 3"
+      - "HDV 4"
+      - "CAV"
+
+  labels:
+    use_math_text: true
+    pad: 2
+
+  grid:
+    enabled: false
+
+
+# ------------------------------------------------------------------------------
+# 6. Color map and normalization
+# ------------------------------------------------------------------------------
+
+color:
+  variable: "acceleration"
+  label: "Acceleration [m/s²]"
+
+  cmap: "RdBu_r"
+  normalization: "centered"
+  center: 0.0
+
+  limits:
+    vmin: -3.0
+    vmax: 2.0
+
+  colorbar:
+    enabled: true
+    orientation: "vertical"
+    fraction: 0.046
+    pad: 0.035
+    ticks: [-3, -2, -1, 0, 1, 2]
+    label_pad: 2
+
+
+# ------------------------------------------------------------------------------
+# 7. Heatmap construction
+# ------------------------------------------------------------------------------
+
+heatmap:
+  pivot:
+    index: "vehicle_index"
+    columns: "time"
+    values: "acceleration"
+
+  interpolation: "nearest"
+  origin: "lower"
+  aspect: "auto"
+
+  resampling:
+    enabled: false
+    target_dt: 0.02
+    method: "linear"
+
+  smoothing:
+    enabled: false
+    sigma_time: 0.0
+    sigma_vehicle: 0.0
+
+  clipping:
+    enabled: true
+    min: -3.0
+    max: 2.0
+
+
+# ------------------------------------------------------------------------------
+# 8. Visual styling
+# ------------------------------------------------------------------------------
+
+style:
+  figure_size_inches: [3.45, 2.45]
+  dpi: 300
+
+  font:
+    family: "Times New Roman"
+    math_font: "stix"
+    size: 8
+    axis_label_size: 8
+    tick_label_size: 7
+    colorbar_label_size: 7
+
+  vehicle_separators:
+    enabled: true
+    color: "#FFFFFF"
+    linewidth: 0.35
+    alpha: 0.55
+
+  cav_highlight:
+    enabled: true
+    y_index: 5
+    color: "#111111"
+    linewidth: 0.75
+    linestyle: "-"
+    alpha: 0.80
+
+  disturbance_markers:
+    enabled: true
+
+    braking_start:
+      time: 8.0
+      label: "Brake"
+      color: "#333333"
+      linestyle: "--"
+      linewidth: 0.65
+      alpha: 0.80
+
+    recovery_start:
+      time: 16.0
+      label: "Recover"
+      color: "#333333"
+      linestyle: ":"
+      linewidth: 0.70
+      alpha: 0.80
+
+    show_labels: false
+
+  title:
+    enabled: false
+    text: "Space-Time Acceleration"
+
+
+# ------------------------------------------------------------------------------
+# 9. Annotations
+# ------------------------------------------------------------------------------
+
+annotations:
+  enabled: true
+
+  cav_label:
+    enabled: false
+    text: "PC-SRC CAV"
+    xy: [32.0, 5.0]
+    xytext: [28.0, 4.4]
+    arrowprops:
+      arrowstyle: "->"
+      color: "#111111"
+      linewidth: 0.7
+
+  attenuation_note:
+    enabled: false
+    text: "Wave attenuated"
+    xy: [24.0, 5.0]
+    xytext: [20.0, 4.2]
+    arrowprops:
+      arrowstyle: "->"
+      color: "#111111"
+      linewidth: 0.7
+
+
+# ------------------------------------------------------------------------------
+# 10. Figure validation
+# ------------------------------------------------------------------------------
+
+validation:
+  enabled: true
+
+  checks:
+    input_files:
+      enabled: true
+      required:
+        - "data/processed/simulations/space_time_acceleration_heatmap.csv"
+
+    required_columns:
+      enabled: true
+      columns:
+        - "time"
+        - "vehicle_index"
+        - "acceleration"
+
+    vehicle_indices:
+      enabled: true
+      required_values: [0, 1, 2, 3, 4, 5]
+
+    time_range:
+      enabled: true
+      min_time: 0.0
+      max_time: 40.0
+      tolerance: 1.0e-9
+
+    acceleration_limits:
+      enabled: true
+      min_allowed: -3.000001
+      max_allowed: 3.000001
+
+    output_files:
+      enabled: true
+      required:
+        - "results/figures/fig7_space_time_heatmap.pdf"
+        - "results/figures/fig7_space_time_heatmap.tex"
+
+  tolerances:
+    time_match: 1.0e-9
+    vehicle_index_match: 0
+
+
+# ------------------------------------------------------------------------------
+# 11. Reproducibility metadata
+# ------------------------------------------------------------------------------
+
+metadata:
+  write: true
+  include:
+    - "figure_id"
+    - "input_file_hashes"
+    - "config_hash"
+    - "git_commit"
+    - "python_version"
+    - "matplotlib_version"
+    - "tikzplotlib_version"
+    - "timestamp_utc"
+
+  notes: >
+    This figure is generated from processed stop-and-go simulation data. The
+    figure script does not run the time-domain simulation.

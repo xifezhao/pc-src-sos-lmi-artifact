@@ -1,0 +1,31 @@
+{
+  "overlap": {
+    "c2_nom": 0.8624999999999999,
+    "c2_worst": 0.8117159999999999,
+    "M4_bound": 2.7023568568059386,
+    "omega_min": 0.25,
+    "omega_upper": 0.5480632779801741,
+    "Q_lower_at_omega_min": 0.0401761685281018,
+    "P_B_at_omega_min": 0.005684886268876532,
+    "overlap_valid": true
+  },
+  "headway_coopt_tau002": 0.4801,
+  "headway_matched_tau002": 0.6027,
+  "sos_cert_a_sturm_feasible": true,
+  "sos_cert_b_feasible": true,
+  "sos_dual_area_tau180_pct": 88.3,
+  "bode_pcsrc_hinf_cav": 1.0,
+  "bode_pcsrc_at_hdv_peak": 0.6039,
+  "bode_h110_hinf_unit": 1.0256,
+  "micro_pcsrc_tail_ratio": 0.6725,
+  "micro_smith_stress_collision": true,
+  "micro_pcsrc_stress_collision": false,
+  "mc_pcsrc_collisions": 0,
+  "mpr0_throughput_vph": 2003.8,
+  "mpr100_throughput_vph": 2347.9,
+  "ngsim_vehicle_id": 1209,
+  "ngsim_pcsrc_tail_ratio": 0.2532,
+  "ngsim_nopred_tail_ratio": 0.3556,
+  "lut_memory_bytes": 576,
+  "lut_switching_peak_jerk": 0.413
+}

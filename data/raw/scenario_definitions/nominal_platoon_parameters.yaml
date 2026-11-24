@@ -1,0 +1,17 @@
+# Nominal Mixed Traffic Platoon Parameters (Table I, IEEE T-ITS)
+vehicle_length_m: 5.0
+standstill_gap_m: 5.0
+headway_s: 1.0
+tau_a_s: 0.20
+tau_e_s: 0.35
+tau_c_s: 0.18
+a_min_ms2: -3.0
+a_max_ms2: 3.0
+v0_ms: 22.0
+v_free_ms: 30.0
+kp: 1.15
+kv: 1.18
+ka: 0.80
+delta_max_s: 0.08
+omega_min_rads: 0.25
+omega_bar_rads: 15.0

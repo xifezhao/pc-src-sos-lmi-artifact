@@ -1,0 +1,2 @@
+delay_ms,nominal_stable,pcsrc_robust_stable,spectral_radius_bound
+# Full metrics require: make reproduce-all  (runs delay robustness sweep)

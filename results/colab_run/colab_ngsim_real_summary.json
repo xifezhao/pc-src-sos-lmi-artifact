@@ -1,0 +1,67 @@
+{
+  "elapsed_s": 9.54,
+  "ngsim_metadata": {
+    "vehicle_id": 1209,
+    "frame_start": 3429,
+    "frame_end": 3828,
+    "lane_id": 3,
+    "num_frames_10hz": 400,
+    "duration_s": 40.0,
+    "v_initial_ms": 10.48,
+    "v_min_ms": 7.11,
+    "v_max_ms": 18.51,
+    "peak_decel_ms2": -3.174,
+    "peak_accel_ms2": 5.073,
+    "v0_ms": 10.478150097902098
+  },
+  "ngsim_platoon_baselines": {
+    "no_predictor": {
+      "tail_ratio": 0.3556,
+      "min_gap": 9.74,
+      "min_ttc": 9.03,
+      "accel_rms": 0.479,
+      "throughput_vph": 1897.2,
+      "collision": false
+    },
+    "classical_smith": {
+      "tail_ratio": 0.015,
+      "min_gap": 8.15,
+      "min_ttc": 4.77,
+      "accel_rms": 0.501,
+      "throughput_vph": 1834.1,
+      "collision": false
+    },
+    "pade_11": {
+      "tail_ratio": 0.2431,
+      "min_gap": 10.17,
+      "min_ttc": 9.03,
+      "accel_rms": 0.431,
+      "throughput_vph": 1906.2,
+      "collision": false
+    },
+    "robust_hinf": {
+      "tail_ratio": 0.2712,
+      "min_gap": 10.11,
+      "min_ttc": 9.03,
+      "accel_rms": 0.444,
+      "throughput_vph": 1900.8,
+      "collision": false
+    },
+    "deep_lcc": {
+      "tail_ratio": 0.2506,
+      "min_gap": 10.27,
+      "min_ttc": 9.03,
+      "accel_rms": 0.435,
+      "throughput_vph": 1916.1,
+      "collision": false
+    },
+    "pc_src": {
+      "tail_ratio": 0.2532,
+      "min_gap": 10.11,
+      "min_ttc": 9.03,
+      "accel_rms": 0.436,
+      "throughput_vph": 1898.0,
+      "collision": false
+    }
+  }
+}

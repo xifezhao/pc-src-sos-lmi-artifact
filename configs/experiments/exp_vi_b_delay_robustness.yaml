@@ -1,0 +1,660 @@
+# ==============================================================================
+# configs/experiments/exp_vi_b_delay_robustness.yaml
+#
+# Experiment VI-B:
+#   Delay robustness slice and structural conservatism comparison.
+#
+# Paper location:
+#   Section VI-B
+#   Fig. 6
+#
+# Purpose:
+#   - Evaluate robust feasibility over a 2D delay/actuator uncertainty plane.
+#   - Compare dual-certificate SOS-LMI feasibility against monolithic baseline.
+#   - Quantify reduced structural conservatism using certified area ratio.
+#   - Export figure data for the fixed-ka delay robustness slice.
+#
+# Expected command:
+#   python -m pcsrc.experiments.exp_vi_b_delay_robustness \
+#       --config configs/experiments/exp_vi_b_delay_robustness.yaml \
+#       --solver-config configs/solver/mosek.yaml
+#
+# Fast AE command:
+#   python -m pcsrc.experiments.exp_vi_b_delay_robustness \
+#       --config configs/experiments/exp_vi_b_delay_robustness.yaml \
+#       --solver-config configs/solver/scs_fallback.yaml \
+#       --profile fast
+# ==============================================================================
+
+
+# ------------------------------------------------------------------------------
+# 1. Experiment identity
+# ------------------------------------------------------------------------------
+
+experiment:
+  id: "exp_vi_b_delay_robustness"
+  name: "VI-B Delay Robustness and Structural Conservatism"
+  paper_section: "VI-B"
+  paper_figure: "Fig. 6"
+
+  description: >
+    Computes the certified feasible region over controller gains and delay
+    parameters at a fixed acceleration-feedforward gain slice. The experiment
+    compares the dual-certificate SOS-LMI construction against the monolithic
+    baseline to demonstrate reduced structural conservatism.
+
+  tags:
+    - "sos-lmi"
+    - "dual-certificate"
+    - "delay-robustness"
+    - "structural-conservatism"
+    - "figure-6"
+
+  enabled: true
+  profile_default: "full"
+
+  dependencies:
+    base_config: "configs/default.yaml"
+    recommended_solver_config: "configs/solver/mosek.yaml"
+    fallback_solver_configs:
+      - "configs/solver/sdpt3.yaml"
+      - "configs/solver/sedumi.yaml"
+      - "configs/solver/scs_fallback.yaml"
+
+
+# ------------------------------------------------------------------------------
+# 2. Physical and traffic model overrides
+# ------------------------------------------------------------------------------
+
+physical:
+  acceleration_limits:
+    min: -3.0
+    max: 3.0
+
+traffic:
+  platoon:
+    num_vehicles_total: 6
+    leader_index: 0
+    hdv_indices: [1, 2, 3, 4]
+    cav_indices: [5]
+    controlled_cav_index: 5
+
+  equilibrium:
+    nominal_speed: 22.0
+    nominal_spacing: 22.0
+    time_headway: 1.0
+
+
+hdv_model:
+  type: "linearized_ovm"
+
+  linearized:
+    spacing_gain: 0.35
+    relative_velocity_gain: 0.55
+    velocity_gain: 0.20
+
+
+# ------------------------------------------------------------------------------
+# 3. Delay and actuator robustness domain
+# ------------------------------------------------------------------------------
+
+cav:
+  actuator:
+    nominal_tau_e: 0.35
+    tau_e_min: 0.20
+    tau_e_max: 0.60
+
+  communication:
+    nominal_tau_c: 0.18
+    tau_c_min: 0.00
+    tau_c_max: 0.40
+
+  delay_mismatch:
+    nominal_delta_max: 0.08
+    delta_max_min: 0.00
+    delta_max_max: 0.16
+    uncertainty_type: "bounded_interval"
+
+
+# ------------------------------------------------------------------------------
+# 4. Controller slice used in Fig. 6
+# ------------------------------------------------------------------------------
+
+controller:
+  name: "PC-SRC"
+
+  fixed_gain_slice:
+    ka: 0.80
+
+  gain_bounds:
+    kp:
+      min: 0.10
+      max: 2.60
+    kv:
+      min: 0.10
+      max: 3.00
+    ka:
+      min: 0.00
+      max: 1.25
+
+  nominal_gain:
+    kp: 1.15
+    kv: 1.18
+    ka: 0.61
+
+
+# ------------------------------------------------------------------------------
+# 5. SOS-LMI formulation
+# ------------------------------------------------------------------------------
+
+sos_lmi:
+  formulation:
+    use_dual_certificate: true
+    use_monolithic_baseline: true
+    robust_attenuation_certificate: true
+    topology_precondition_certificate: true
+    use_schur_lift: true
+
+  polynomial:
+    variables:
+      - "kp"
+      - "kv"
+      - "tau_c"
+      - "tau_e"
+      - "delta"
+
+    fixed_variables:
+      ka: 0.80
+
+    degree:
+      certificate_A: 2
+      certificate_B: 2
+      monolithic: 2
+      multipliers: 2
+
+    basis: "monomial"
+    basis_scaling: true
+    remove_redundant_monomials: true
+
+  positivity_domain:
+    gain_box:
+      kp: [0.10, 2.60]
+      kv: [0.10, 3.00]
+      ka: [0.80, 0.80]
+
+    delay_box:
+      tau_c: [0.00, 0.40]
+      tau_e: [0.20, 0.60]
+      delta: [0.00, 0.16]
+
+  feasibility:
+    min_lmi_eigenvalue_tolerance: -1.0e-7
+    max_primal_residual: 1.0e-6
+    max_dual_residual: 1.0e-6
+    require_solver_optimal: false
+
+
+# ------------------------------------------------------------------------------
+# 6. 2D gain-slice grid settings
+# ------------------------------------------------------------------------------
+
+grid:
+  mode: "structured"
+  deterministic_order: true
+
+  variables:
+    kp:
+      start: 0.35
+      stop: 2.35
+      num: 81
+      scale: "linear"
+
+    kv:
+      start: 0.40
+      stop: 2.70
+      num: 93
+      scale: "linear"
+
+  fixed_parameters:
+    ka: 0.80
+    tau_c: 0.18
+    tau_e: 0.35
+    delta_max: 0.08
+
+  robustness_scenarios:
+    nominal:
+      tau_c: 0.18
+      tau_e: 0.35
+      delta_max: 0.08
+
+    high_communication_delay:
+      tau_c: 0.30
+      tau_e: 0.35
+      delta_max: 0.08
+
+    slow_actuator:
+      tau_c: 0.18
+      tau_e: 0.50
+      delta_max: 0.08
+
+    worst_case:
+      tau_c: 0.30
+      tau_e: 0.50
+      delta_max: 0.14
+
+  selected_scenario_for_figure: "nominal"
+
+  total_grid_points_expected: 7533
+
+  chunking:
+    enabled: true
+    chunk_size: 512
+    save_after_each_chunk: true
+    resume_from_partial: true
+
+  parallel:
+    enabled: true
+    backend: "joblib"
+    n_jobs: -1
+    prefer: "processes"
+
+  cache:
+    enabled: true
+    directory: "data/processed/feasibility_grid/cache/exp_vi_b"
+    key_fields:
+      - "kp"
+      - "kv"
+      - "ka"
+      - "tau_c"
+      - "tau_e"
+      - "delta_max"
+      - "certificate_type"
+      - "solver"
+      - "config_hash"
+
+
+# ------------------------------------------------------------------------------
+# 7. Certificate evaluation options
+# ------------------------------------------------------------------------------
+
+certificates:
+  evaluate_dual_certificate: true
+  evaluate_monolithic_baseline: true
+
+  dual_certificate:
+    stages:
+      - id: "A"
+        name: "topology_precondition_certificate"
+        enabled: true
+        output_file: "certificates/dual_certificate/certificate_A_topology_precondition_exp_vi_b.json"
+
+      - id: "B"
+        name: "schur_robustness_certificate"
+        enabled: true
+        output_file: "certificates/dual_certificate/certificate_B_schur_robustness_exp_vi_b.json"
+
+    feasibility_rule: "A_and_B_must_pass"
+
+  monolithic_certificate:
+    enabled: true
+    output_file: "certificates/monolithic_certificate/monolithic_certificate_exp_vi_b.json"
+
+  residual_checks:
+    enabled: true
+    save_primal_dual_residuals: true
+    save_lmi_eigenvalue_margins: true
+    save_polynomial_residuals: true
+
+  infeasible_audit:
+    enabled: true
+    save_first_n_examples: 100
+    output_file: "certificates/verification_logs/exp_vi_b_infeasible_points_audit.csv"
+
+
+# ------------------------------------------------------------------------------
+# 8. Post-processing and conservatism metrics
+# ------------------------------------------------------------------------------
+
+postprocessing:
+  feasible_point_filter:
+    require_certificate_pass: true
+    require_residual_pass: true
+    require_eigenvalue_margin_pass: true
+
+  area_estimation:
+    enabled: true
+    method: "grid_cell_count"
+    dimensions:
+      - "kp"
+      - "kv"
+    cell_area_from_grid_spacing: true
+
+  contour_extraction:
+    enabled: true
+    method: "marching_squares"
+    levels:
+      - 0.5
+    export_contours: true
+
+  comparison_metrics:
+    dual_vs_monolithic:
+      enabled: true
+      compute_area_dual: true
+      compute_area_monolithic: true
+      compute_area_ratio: true
+      compute_newly_certified_area: true
+      compute_newly_certified_points: true
+
+      # Main qualitative claim:
+      # dual certificate should not be more conservative than the monolithic
+      # construction on this slice.
+      require_dual_superset: true
+      allowed_violations: 0
+      min_expected_area_ratio: 1.10
+
+  robustness_scenario_metrics:
+    enabled: true
+    compute_area_for_each_scenario: true
+    compute_area_shrinkage_relative_to_nominal: true
+
+
+# ------------------------------------------------------------------------------
+# 9. Output files
+# ------------------------------------------------------------------------------
+
+outputs:
+  root: "data/processed/feasibility_grid/exp_vi_b"
+
+  raw_grid:
+    dual: "data/processed/feasibility_grid/exp_vi_b/dual_raw_grid.csv"
+    monolithic: "data/processed/feasibility_grid/exp_vi_b/monolithic_raw_grid.csv"
+    combined: "data/processed/feasibility_grid/exp_vi_b/combined_raw_grid.csv"
+
+  feasible_points:
+    dual: "data/processed/feasibility_grid/exp_vi_b/dual_feasible_points.csv"
+    monolithic: "data/processed/feasibility_grid/exp_vi_b/monolithic_feasible_points.csv"
+    newly_certified: "data/processed/feasibility_grid/exp_vi_b/newly_certified_points.csv"
+
+  contours:
+    dual: "data/processed/feasibility_grid/exp_vi_b/dual_contour.csv"
+    monolithic: "data/processed/feasibility_grid/exp_vi_b/monolithic_contour.csv"
+    newly_certified_boundary: "data/processed/feasibility_grid/exp_vi_b/newly_certified_boundary.csv"
+
+  figure_data:
+    fig6_csv: "data/processed/feasibility_grid/fig6_ka08_slice.csv"
+    fig6_contours_json: "data/processed/feasibility_grid/fig6_contours.json"
+    fig6_pgfplots_dual: "results/figures/fig6_dual_contour.dat"
+    fig6_pgfplots_monolithic: "results/figures/fig6_monolithic_contour.dat"
+
+  certificates:
+    dual_residual_report: "certificates/dual_certificate/residual_report_exp_vi_b.json"
+    monolithic_residual_report: "certificates/monolithic_certificate/residual_report_exp_vi_b.json"
+
+  verification:
+    solver_status_summary: "certificates/verification_logs/exp_vi_b_solver_status_summary.csv"
+    primal_dual_residuals: "certificates/verification_logs/exp_vi_b_primal_dual_residuals.csv"
+    lmi_eigenvalue_margins: "certificates/verification_logs/exp_vi_b_lmi_eigenvalue_margins.csv"
+    superset_report: "certificates/verification_logs/exp_vi_b_dual_superset_report.json"
+
+  metrics:
+    area_metrics: "results/metrics/exp_vi_b_area_metrics.csv"
+    robustness_metrics: "results/metrics/exp_vi_b_robustness_metrics.csv"
+    runtime_summary: "results/metrics/exp_vi_b_runtime_summary.json"
+
+  figures:
+    pdf: "results/figures/fig6_structural_conservatism.pdf"
+    tex: "results/figures/fig6_structural_conservatism.tex"
+    png: "results/figures/fig6_structural_conservatism.png"
+
+
+# ------------------------------------------------------------------------------
+# 10. Figure generation: Fig. 6
+# ------------------------------------------------------------------------------
+
+figure:
+  id: "fig6_structural_conservatism"
+  enabled: true
+
+  title: "Delay-Robust Feasibility Slice and Conservatism Reduction"
+  caption: >
+    Feasible gain slice at fixed ka = 0.80. The dual-certificate construction
+    certifies a larger feasible region than the monolithic baseline, indicating
+    reduced structural conservatism while preserving robust SOS-LMI feasibility
+    under communication and actuator delay uncertainty.
+
+  data_source: "data/processed/feasibility_grid/fig6_ka08_slice.csv"
+
+  plot_type: "2d_feasibility_contour"
+  backend: "matplotlib"
+  export_tikz: true
+  export_pgfplots: true
+  export_pdf: true
+  export_png: true
+
+  axes:
+    x:
+      variable: "kp"
+      label: "$k_p$"
+      limits: [0.10, 2.60]
+
+    y:
+      variable: "kv"
+      label: "$k_v$"
+      limits: [0.10, 3.00]
+
+  fixed_annotation:
+    enabled: true
+    text: "$k_a=0.80,\\ \\tau_c=0.18,\\ \\tau_e=0.35,\\ \\delta_{\\max}=0.08$"
+    location: "upper left"
+
+  style:
+    figure_size_inches: [3.45, 2.65]
+    dpi: 300
+    font_family: "Times New Roman"
+    font_size: 8
+    grid: true
+
+    regions:
+      dual:
+        label: "Dual certificate"
+        face_color: "#A6CEE3"
+        edge_color: "#1F77B4"
+        alpha: 0.55
+        line_width: 1.10
+
+      monolithic:
+        label: "Monolithic baseline"
+        face_color: "#FDBF6F"
+        edge_color: "#D95F02"
+        alpha: 0.45
+        line_width: 1.10
+
+      newly_certified:
+        label: "Newly certified"
+        face_color: "#B2DF8A"
+        edge_color: "#33A02C"
+        alpha: 0.35
+        hatch: "//"
+
+    nominal_gain_marker:
+      enabled: true
+      kp: 1.15
+      kv: 1.18
+      marker: "o"
+      color: "black"
+      size: 18
+      label: "Nominal gain"
+
+    legend:
+      enabled: true
+      location: "lower right"
+      font_size: 7
+      frameon: true
+
+  pgfplots:
+    enabled: true
+    compat: "1.18"
+    width: "0.95\\columnwidth"
+    height: "0.72\\columnwidth"
+    fill_opacity:
+      dual: 0.55
+      monolithic: 0.45
+      newly_certified: 0.35
+
+
+# ------------------------------------------------------------------------------
+# 11. Validation criteria
+# ------------------------------------------------------------------------------
+
+validation:
+  enabled: true
+
+  checks:
+    grid_size:
+      enabled: true
+      expected_total_points: 7533
+      exact_match: true
+
+    certificate_residuals:
+      enabled: true
+      max_primal_residual: 1.0e-6
+      max_dual_residual: 1.0e-6
+      min_lmi_eigenvalue: -1.0e-7
+
+    dual_superset_monolithic:
+      enabled: true
+      require_pointwise_superset: true
+      allowed_violations: 0
+
+    area_ratio:
+      enabled: true
+      min_dual_over_monolithic: 1.10
+
+    output_files:
+      enabled: true
+      required:
+        - "data/processed/feasibility_grid/fig6_ka08_slice.csv"
+        - "data/processed/feasibility_grid/fig6_contours.json"
+        - "results/metrics/exp_vi_b_area_metrics.csv"
+        - "results/figures/fig6_structural_conservatism.pdf"
+
+  expected_behavior:
+    qualitative_claim: >
+      At the fixed ka = 0.80 slice, the dual-certificate feasible set contains
+      the monolithic baseline feasible set and certifies additional gain pairs.
+
+
+# ------------------------------------------------------------------------------
+# 12. Execution profiles
+# ------------------------------------------------------------------------------
+
+profiles:
+  fast:
+    description: "Reduced 2D gain slice for AE smoke test and local debugging."
+
+    override:
+      grid:
+        variables:
+          kp:
+            start: 0.50
+            stop: 2.20
+            num: 21
+          kv:
+            start: 0.60
+            stop: 2.50
+            num: 23
+
+        total_grid_points_expected: 483
+
+        parallel:
+          enabled: true
+          n_jobs: -1
+
+      validation:
+        checks:
+          grid_size:
+            expected_total_points: 483
+          area_ratio:
+            enabled: false
+          dual_superset_monolithic:
+            allowed_violations: 2
+
+      certificates:
+        evaluate_monolithic_baseline: true
+
+  medium:
+    description: "Intermediate grid for development and visual-quality checks."
+
+    override:
+      grid:
+        variables:
+          kp:
+            start: 0.40
+            stop: 2.30
+            num: 41
+          kv:
+            start: 0.50
+            stop: 2.60
+            num: 47
+
+        total_grid_points_expected: 1927
+
+      validation:
+        checks:
+          grid_size:
+            expected_total_points: 1927
+
+  plotting_only:
+    description: "Regenerate Fig. 6 from processed CSV and contour files."
+
+    override:
+      execution:
+        run_solver: false
+        run_postprocessing: true
+        run_validation: true
+        run_figure_generation: true
+        require_existing_processed_data: true
+
+
+# ------------------------------------------------------------------------------
+# 13. Runtime and reproducibility
+# ------------------------------------------------------------------------------
+
+execution:
+  run_solver: true
+  run_postprocessing: true
+  run_validation: true
+  run_figure_generation: true
+
+  resume: true
+  overwrite_existing: false
+  fail_fast: true
+
+  save_config_snapshot: true
+  save_command_line: true
+  save_environment_snapshot: true
+
+  progress_bar: true
+  log_level: "INFO"
+
+  expected_runtime:
+    fast_minutes: 5
+    medium_minutes: 45
+    full_hours: 2
+
+
+reproducibility:
+  random_seed: 20260816
+  deterministic_order: true
+  write_metadata_sidecar: true
+
+  metadata_fields:
+    - "experiment_id"
+    - "config_hash"
+    - "solver_config_hash"
+    - "git_commit"
+    - "python_version"
+    - "matlab_version"
+    - "solver_name"
+    - "solver_version"
+    - "timestamp_utc"

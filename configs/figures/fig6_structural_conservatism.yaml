@@ -1,0 +1,387 @@
+# ==============================================================================
+# configs/figures/fig6_structural_conservatism.yaml
+#
+# Figure 6:
+#   Structural conservatism comparison on a fixed-ka gain slice.
+#
+# Purpose:
+#   - Plot the 2D feasible gain slice over {kp, kv} at fixed ka.
+#   - Compare dual-certificate feasible region against monolithic baseline.
+#   - Highlight newly certified area produced by the dual-certificate method.
+#   - Load processed grid and contour data from Experiment VI-B.
+#
+# Upstream experiment:
+#   configs/experiments/exp_vi_b_delay_robustness.yaml
+#
+# Expected command:
+#   python -m pcsrc.figures.fig6_structural_conservatism \
+#       --config configs/figures/fig6_structural_conservatism.yaml
+#
+# Alternative:
+#   python scripts/make_figures.py --figure fig6
+# ==============================================================================
+
+
+# ------------------------------------------------------------------------------
+# 1. Figure identity
+# ------------------------------------------------------------------------------
+
+figure:
+  id: "fig6_structural_conservatism"
+  number: 6
+  name: "Structural Conservatism Comparison"
+  paper_section: "VI-B"
+
+  description: >
+    Visualizes a fixed-ka feasible gain slice and compares the dual-certificate
+    SOS-LMI construction with the monolithic baseline. The area certified by
+    the dual method but not by the monolithic formulation is shown as the newly
+    certified region.
+
+  upstream_experiment:
+    id: "exp_vi_b_delay_robustness"
+    config: "configs/experiments/exp_vi_b_delay_robustness.yaml"
+
+  enabled: true
+
+
+# ------------------------------------------------------------------------------
+# 2. Input data
+# ------------------------------------------------------------------------------
+
+inputs:
+  figure_data_csv: "data/processed/feasibility_grid/fig6_ka08_slice.csv"
+  contours_json: "data/processed/feasibility_grid/fig6_contours.json"
+
+  optional:
+    dual_contour_csv: "data/processed/feasibility_grid/exp_vi_b/dual_contour.csv"
+    monolithic_contour_csv: "data/processed/feasibility_grid/exp_vi_b/monolithic_contour.csv"
+    newly_certified_boundary_csv: "data/processed/feasibility_grid/exp_vi_b/newly_certified_boundary.csv"
+    area_metrics_csv: "results/metrics/exp_vi_b_area_metrics.csv"
+
+  required_columns:
+    - "kp"
+    - "kv"
+    - "ka"
+    - "tau_c"
+    - "tau_e"
+    - "delta_max"
+    - "dual_feasible"
+    - "monolithic_feasible"
+
+  derived_columns:
+    newly_certified: "dual_feasible and not monolithic_feasible"
+
+  filters:
+    ka: 0.80
+    tau_c: 0.18
+    tau_e: 0.35
+    delta_max: 0.08
+
+  validation:
+    require_files_exist: true
+    require_nonempty_data: true
+    require_grid_rectangular: true
+    require_binary_feasibility_columns: true
+
+
+# ------------------------------------------------------------------------------
+# 3. Output files
+# ------------------------------------------------------------------------------
+
+outputs:
+  pdf: "results/figures/fig6_structural_conservatism.pdf"
+  tex: "results/figures/fig6_structural_conservatism.tex"
+  pgf: "results/figures/fig6_structural_conservatism.pgf"
+  png: "results/figures/fig6_structural_conservatism.png"
+
+  data_exports:
+    dual_pgfplots_dat: "results/figures/fig6_dual_contour.dat"
+    monolithic_pgfplots_dat: "results/figures/fig6_monolithic_contour.dat"
+    newly_certified_dat: "results/figures/fig6_newly_certified.dat"
+    plotted_summary_csv: "results/figures/fig6_structural_conservatism_plotted_summary.csv"
+
+  metadata: "results/figures/fig6_structural_conservatism_metadata.yaml"
+
+
+# ------------------------------------------------------------------------------
+# 4. Plot type and rendering backend
+# ------------------------------------------------------------------------------
+
+rendering:
+  backend: "matplotlib"
+  plot_type: "2d_feasibility_contour"
+
+  export:
+    pdf: true
+    tex: true
+    pgf: false
+    png: true
+
+  tikz:
+    enabled: true
+    library: "tikzplotlib"
+    standalone: false
+    strict: false
+    axis_width: "\\columnwidth"
+    axis_height: "0.75\\columnwidth"
+
+  pgfplots:
+    enabled: true
+    compat: "1.18"
+    fill_between: true
+    contour_source: "exported_dat"
+
+
+# ------------------------------------------------------------------------------
+# 5. Axes and fixed-slice annotation
+# ------------------------------------------------------------------------------
+
+axes:
+  x:
+    variable: "kp"
+    label: "$k_p$"
+    limits: [0.10, 2.60]
+    ticks: [0.5, 1.0, 1.5, 2.0, 2.5]
+
+  y:
+    variable: "kv"
+    label: "$k_v$"
+    limits: [0.10, 3.00]
+    ticks: [0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
+
+  labels:
+    use_math_text: true
+    pad: 2
+
+  grid:
+    enabled: true
+    alpha: 0.28
+    linestyle: "-"
+
+
+fixed_slice:
+  enabled: true
+
+  values:
+    ka: 0.80
+    tau_c: 0.18
+    tau_e: 0.35
+    delta_max: 0.08
+
+  annotation:
+    enabled: true
+    text: "$k_a=0.80,\\ \\tau_c=0.18,\\ \\tau_e=0.35,\\ \\delta_{\\max}=0.08$"
+    location: "upper left"
+    font_size: 7
+    bbox:
+      enabled: true
+      facecolor: "white"
+      edgecolor: "#BBBBBB"
+      alpha: 0.80
+      pad: 0.20
+
+
+# ------------------------------------------------------------------------------
+# 6. Region styling
+# ------------------------------------------------------------------------------
+
+style:
+  figure_size_inches: [3.45, 2.65]
+  dpi: 300
+
+  font:
+    family: "Times New Roman"
+    math_font: "stix"
+    size: 8
+    axis_label_size: 8
+    tick_label_size: 7
+    legend_size: 7
+
+  regions:
+    monolithic:
+      label: "Monolithic baseline"
+      column: "monolithic_feasible"
+      face_color: "#FDBF6F"
+      edge_color: "#D95F02"
+      face_alpha: 0.42
+      edge_alpha: 0.95
+      line_width: 1.05
+      z_order: 1
+
+    dual:
+      label: "Dual certificate"
+      column: "dual_feasible"
+      face_color: "#A6CEE3"
+      edge_color: "#1F77B4"
+      face_alpha: 0.48
+      edge_alpha: 0.95
+      line_width: 1.10
+      z_order: 2
+
+    newly_certified:
+      label: "Newly certified"
+      expression: "dual_feasible & ~monolithic_feasible"
+      face_color: "#B2DF8A"
+      edge_color: "#33A02C"
+      face_alpha: 0.36
+      edge_alpha: 0.90
+      hatch: "//"
+      line_width: 0.80
+      z_order: 3
+
+  contour:
+    method: "marching_squares"
+    level: 0.5
+    smooth: false
+    close_paths: true
+
+  nominal_gain_marker:
+    enabled: true
+    kp: 1.15
+    kv: 1.18
+    marker: "o"
+    size: 18
+    color: "black"
+    edge_color: "white"
+    label: "Nominal gain"
+    z_order: 5
+
+  legend:
+    enabled: true
+    location: "lower right"
+    frameon: true
+    framealpha: 0.92
+    borderpad: 0.25
+    handlelength: 1.3
+
+  title:
+    enabled: false
+    text: "Structural Conservatism"
+
+
+# ------------------------------------------------------------------------------
+# 7. Area and conservatism metrics
+# ------------------------------------------------------------------------------
+
+metrics:
+  enabled: true
+  source: "compute_from_grid"
+
+  area_estimation:
+    method: "grid_cell_count"
+    infer_cell_area_from_spacing: true
+
+  compute:
+    dual_area: true
+    monolithic_area: true
+    newly_certified_area: true
+    area_ratio_dual_over_monolithic: true
+    newly_certified_fraction_of_dual: true
+
+  annotate_on_plot:
+    enabled: false
+    text_template: "Area ratio = {area_ratio_dual_over_monolithic:.2f}x"
+    location: "lower left"
+
+  export:
+    enabled: true
+    file: "results/figures/fig6_structural_conservatism_plotted_summary.csv"
+
+
+# ------------------------------------------------------------------------------
+# 8. Contour extraction
+# ------------------------------------------------------------------------------
+
+contours:
+  source: "precomputed_or_recompute"
+  preferred_source: "contours_json"
+  recompute_if_missing: true
+
+  extraction:
+    method: "marching_squares"
+    levels:
+      - 0.5
+
+  postprocess:
+    remove_short_segments: true
+    min_segment_points: 4
+    simplify: false
+    close_paths: true
+
+  export:
+    enabled: true
+    files:
+      dual: "results/figures/fig6_dual_contour.dat"
+      monolithic: "results/figures/fig6_monolithic_contour.dat"
+      newly_certified: "results/figures/fig6_newly_certified.dat"
+
+
+# ------------------------------------------------------------------------------
+# 9. Figure validation
+# ------------------------------------------------------------------------------
+
+validation:
+  enabled: true
+
+  checks:
+    input_files:
+      enabled: true
+      required:
+        - "data/processed/feasibility_grid/fig6_ka08_slice.csv"
+        - "data/processed/feasibility_grid/fig6_contours.json"
+
+    fixed_slice_match:
+      enabled: true
+      expected:
+        ka: 0.80
+        tau_c: 0.18
+        tau_e: 0.35
+        delta_max: 0.08
+
+    feasibility_columns:
+      enabled: true
+      require_boolean_or_binary:
+        - "dual_feasible"
+        - "monolithic_feasible"
+
+    dual_superset_monolithic:
+      enabled: true
+      require_pointwise_superset: true
+      allowed_violations: 0
+
+    newly_certified_nonempty:
+      enabled: true
+      min_points: 1
+
+    output_files:
+      enabled: true
+      required:
+        - "results/figures/fig6_structural_conservatism.pdf"
+        - "results/figures/fig6_structural_conservatism.tex"
+
+  tolerances:
+    fixed_slice_match: 1.0e-9
+    area_ratio: 1.0e-12
+
+
+# ------------------------------------------------------------------------------
+# 10. Reproducibility metadata
+# ------------------------------------------------------------------------------
+
+metadata:
+  write: true
+  include:
+    - "figure_id"
+    - "input_file_hashes"
+    - "config_hash"
+    - "git_commit"
+    - "python_version"
+    - "matplotlib_version"
+    - "tikzplotlib_version"
+    - "timestamp_utc"
+
+  notes: >
+    This figure is generated from post-processed fixed-ka feasibility slice data
+    produced by Experiment VI-B. The figure script does not run the SOS-LMI
+    solver and only performs plotting, contour extraction, and area summarization.

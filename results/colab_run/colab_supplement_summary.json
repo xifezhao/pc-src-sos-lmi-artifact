@@ -1,0 +1,71 @@
+{
+  "elapsed_s": 7.08,
+  "bode_h110": {
+    "hinf_cav": 1.0,
+    "hinf_unit": 1.0256
+  },
+  "empirical_wave_baselines": {
+    "no_predictor": {
+      "tail_ratio": 0.862,
+      "min_gap": 15.07,
+      "min_ttc": 6.82,
+      "accel_rms": 0.871,
+      "throughput_vph": 2260.7,
+      "collision": false
+    },
+    "classical_smith": {
+      "tail_ratio": 1.3828,
+      "min_gap": 12.69,
+      "min_ttc": 5.43,
+      "accel_rms": 0.921,
+      "throughput_vph": 2236.5,
+      "collision": false
+    },
+    "pade_11": {
+      "tail_ratio": 0.6347,
+      "min_gap": 15.07,
+      "min_ttc": 6.82,
+      "accel_rms": 0.8,
+      "throughput_vph": 2301.3,
+      "collision": false
+    },
+    "robust_hinf": {
+      "tail_ratio": 0.7027,
+      "min_gap": 14.98,
+      "min_ttc": 6.82,
+      "accel_rms": 0.829,
+      "throughput_vph": 2259.3,
+      "collision": false
+    },
+    "deep_lcc": {
+      "tail_ratio": 0.6491,
+      "min_gap": 15.07,
+      "min_ttc": 6.82,
+      "accel_rms": 0.806,
+      "throughput_vph": 2278.2,
+      "collision": false
+    },
+    "pc_src": {
+      "tail_ratio": 0.6632,
+      "min_gap": 15.07,
+      "min_ttc": 6.82,
+      "accel_rms": 0.811,
+      "throughput_vph": 2271.0,
+      "collision": false
+    }
+  },
+  "lut_switching_and_grade": {
+    "without_outer_trim": {
+      "tail_ratio": 0.647,
+      "min_gap": 13.61,
+      "peak_switch_jerk_ms3": 0.413,
+      "steady_state_spacing_err_m": 0.803
+    },
+    "with_outer_integral_trim": {
+      "tail_ratio": 0.7433,
+      "min_gap": 12.81,
+      "peak_switch_jerk_ms3": 0.413,
+      "steady_state_spacing_err_m": 0.749
+    }
+  }
+}

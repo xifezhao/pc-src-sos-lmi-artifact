@@ -1,0 +1,836 @@
+# ==============================================================================
+# configs/experiments/exp_vi_c_stop_and_go.yaml
+#
+# Experiment VI-C:
+#   Stop-and-go disturbance scenario for mixed HDV/CAV platoon simulation.
+#
+# Paper location:
+#   Section VI-C
+#   Fig. 7 and Fig. 8
+#
+# Purpose:
+#   - Define the stop-and-go leader perturbation scenario.
+#   - Run time-domain simulation for the mixed platoon.
+#   - Validate acceleration-wave attenuation by the certified PC-SRC controller.
+#   - Check safety properties: no collision and no actuator clipping.
+#   - Export data used by Fig. 7 and Fig. 8.
+#
+# Expected command:
+#   python -m pcsrc.experiments.exp_vi_c_stop_and_go \
+#       --config configs/experiments/exp_vi_c_stop_and_go.yaml
+#
+# Alternative command:
+#   python scripts/run_stop_and_go.py \
+#       --config configs/experiments/exp_vi_c_stop_and_go.yaml
+#
+# Fast AE command:
+#   python -m pcsrc.experiments.exp_vi_c_stop_and_go \
+#       --config configs/experiments/exp_vi_c_stop_and_go.yaml \
+#       --profile fast
+# ==============================================================================
+
+
+# ------------------------------------------------------------------------------
+# 1. Experiment identity
+# ------------------------------------------------------------------------------
+
+experiment:
+  id: "exp_vi_c_stop_and_go"
+  name: "VI-C Stop-and-Go Scenario"
+  paper_section: "VI-C"
+  paper_figures:
+    - "Fig. 7"
+    - "Fig. 8"
+
+  description: >
+    Defines and executes the stop-and-go perturbation scenario used to evaluate
+    the certified PC-SRC controller in a mixed HDV/CAV platoon. The scenario
+    introduces a leader braking-and-recovery pulse, then measures downstream
+    acceleration-wave amplification or attenuation, spacing safety, and actuator
+    saturation behavior.
+
+  tags:
+    - "stop-and-go"
+    - "micro-simulation"
+    - "mixed-platoon"
+    - "pc-src"
+    - "wave-attenuation"
+    - "no-collision"
+    - "no-actuator-clipping"
+    - "figure-7"
+    - "figure-8"
+
+  enabled: true
+  profile_default: "full"
+
+  dependencies:
+    base_config: "configs/default.yaml"
+    optional_solver_config: "configs/solver/mosek.yaml"
+    optional_lut_config: "configs/experiments/exp_vi_d_lut_deployment.yaml"
+    related_experiment_config: "configs/experiments/exp_vi_c_micro_simulation.yaml"
+
+  reproducibility_claim: >
+    With deterministic initialization, fixed controller gains, and fixed solver
+    or LUT metadata, this scenario should reproduce identical trajectory samples
+    up to the configured floating-point tolerance.
+
+
+# ------------------------------------------------------------------------------
+# 2. Scenario definition
+# ------------------------------------------------------------------------------
+
+scenario:
+  id: "stop_and_go"
+  name: "Leader brake-recover stop-and-go pulse"
+  type: "deterministic_leader_disturbance"
+
+  description: >
+    The leader vehicle applies a smooth braking pulse followed by a smoother
+    recovery acceleration pulse. This creates a stop-and-go wave that propagates
+    through four HDVs before reaching the controlled CAV.
+
+  leader_control:
+    mode: "prescribed_acceleration"
+    profile_type: "brake_recover_pulse"
+
+    # Time parameters.
+    braking_start_time: 8.0
+    braking_peak_time: 11.5
+    braking_end_time: 15.5
+
+    recovery_start_time: 16.0
+    recovery_peak_time: 20.5
+    recovery_end_time: 26.0
+
+    # Acceleration amplitudes in m/s^2.
+    braking_amplitude: -2.3
+    recovery_amplitude: 1.15
+
+    # Pulse widths used by smooth Gaussian-like or raised-cosine generators.
+    braking_width: 2.1
+    recovery_width: 2.7
+
+    # Smoothness policy.
+    smooth_profile: true
+    smoothness_class: "C1"
+    generator: "raised_cosine"
+
+    # Physical limits.
+    enforce_acceleration_limits: true
+    min_acceleration: -3.0
+    max_acceleration: 3.0
+
+  disturbance:
+    starts_at: 8.0
+    ends_at: 26.0
+    nominal_peak_deceleration: -2.3
+    nominal_recovery_acceleration: 1.15
+    affected_vehicle: "leader"
+
+  expected_effect:
+    wave_reaches_hdv4_around_s: 18.0
+    cav_attenuation_observed_after_s: 20.0
+
+
+# ------------------------------------------------------------------------------
+# 3. Physical constraints and safety envelope
+# ------------------------------------------------------------------------------
+
+physical:
+  units:
+    time: "s"
+    distance: "m"
+    speed: "m/s"
+    acceleration: "m/s^2"
+
+  acceleration_limits:
+    min: -3.0
+    max: 3.0
+    tolerance: 1.0e-6
+
+  collision_boundary:
+    min_spacing: 0.0
+    strict_positive_spacing: true
+    tolerance: 1.0e-6
+
+  desired_safety_margin:
+    nominal_spacing: 22.0
+    min_spacing_warning: 5.0
+
+  numerical_safety:
+    reject_nan: true
+    reject_inf: true
+    terminate_on_invalid_state: true
+
+
+# ------------------------------------------------------------------------------
+# 4. Mixed-platoon layout
+# ------------------------------------------------------------------------------
+
+traffic:
+  platoon:
+    num_vehicles_total: 6
+    leader_index: 0
+    hdv_indices: [1, 2, 3, 4]
+    cav_indices: [5]
+    controlled_cav_index: 5
+
+    vehicle_labels:
+      "0": "Leader"
+      "1": "HDV 1"
+      "2": "HDV 2"
+      "3": "HDV 3"
+      "4": "HDV 4"
+      "5": "CAV"
+
+  equilibrium:
+    nominal_speed: 22.0
+    nominal_spacing: 22.0
+    time_headway: 1.0
+
+  initial_conditions:
+    use_equilibrium_initialization: true
+    initial_speed_all: 22.0
+    initial_spacing_all: 22.0
+
+    # Deterministic perturbations are disabled for the paper figure.
+    perturb_spacing_std: 0.0
+    perturb_speed_std: 0.0
+    perturb_acceleration_std: 0.0
+
+    leader_initial_position: 0.0
+    following_positions_policy: "nominal_spacing_backwards"
+
+
+# ------------------------------------------------------------------------------
+# 5. HDV behavior model
+# ------------------------------------------------------------------------------
+
+hdv_model:
+  type: "linearized_ovm"
+  description: >
+    Human-driven vehicles are modeled by a linearized car-following surrogate
+    around the nominal equilibrium speed and spacing.
+
+  linearized:
+    spacing_gain: 0.35
+    relative_velocity_gain: 0.55
+    velocity_gain: 0.20
+
+  ovm:
+    enabled: true
+    alpha: 0.60
+    beta: 0.90
+    desired_speed: 30.0
+    standstill_spacing: 5.0
+    transition_spacing: 20.0
+
+  reaction:
+    enabled: false
+    nominal_reaction_time: 0.0
+    reaction_time_std: 0.0
+
+  noise:
+    enabled: false
+    acceleration_std: 0.0
+    seed: 20260816
+
+
+# ------------------------------------------------------------------------------
+# 6. CAV actuator, communication, and sensing
+# ------------------------------------------------------------------------------
+
+cav:
+  actuator:
+    model: "first_order_lag_with_delay"
+    nominal_tau_e: 0.35
+    tau_e_min: 0.20
+    tau_e_max: 0.60
+    input_delay_tau_a: 0.00
+
+    saturation:
+      enabled: true
+      min_acceleration: -3.0
+      max_acceleration: 3.0
+      report_clipping: true
+      clipping_tolerance: 1.0e-6
+
+  communication:
+    nominal_tau_c: 0.18
+    tau_c_min: 0.00
+    tau_c_max: 0.40
+    delay_profile: "constant"
+
+    packet_loss_enabled: false
+    packet_loss_probability: 0.0
+
+    v2v_source:
+      preceding_vehicle_acceleration: true
+      preceding_vehicle_velocity: false
+      leader_broadcast: false
+
+  delay_mismatch:
+    nominal_delta_max: 0.08
+    uncertainty_type: "bounded_interval"
+
+  sensor:
+    radar_vision_latency: 0.03
+    measurement_noise_enabled: false
+    spacing_noise_std: 0.0
+    relative_velocity_noise_std: 0.0
+    acceleration_noise_std: 0.0
+
+
+# ------------------------------------------------------------------------------
+# 7. PC-SRC controller
+# ------------------------------------------------------------------------------
+
+controller:
+  name: "PC-SRC"
+  type: "preconditioned_communication_string_robust_controller"
+
+  source:
+    mode: "fixed_gain"
+    require_certificate: true
+
+    # Optional alternatives supported by the codebase:
+    #   - fixed_gain
+    #   - lut
+    #   - regenerated_certificate
+    #   - reference_cached_certificate
+    #   - error_if_uncertified
+    fallback_policy: "error_if_uncertified"
+
+  fixed_gain:
+    kp: 1.15
+    kv: 1.18
+    ka: 0.61
+
+    certificate_id: "default_nominal_pcsrc_gain"
+    certificate_file: "certificates/dual_certificate/certificate_A_topology_precondition.json"
+    robustness_certificate_file: "certificates/dual_certificate/certificate_B_schur_robustness.json"
+
+  control_law:
+    use_spacing_error: true
+    use_relative_velocity: true
+    use_preceding_acceleration: true
+
+    spacing_error_sign_convention: "actual_minus_nominal"
+    relative_velocity_sign_convention: "preceding_minus_ego"
+
+  scheduling:
+    enabled: false
+    source: "lut"
+    lut_file: "data/processed/lut/certified_gain_lut.json"
+    interpolation: "nearest"
+    fallback_policy: "nearest_feasible"
+    require_certificate: true
+
+  safety_filter:
+    enabled: false
+    type: "none"
+
+  diagnostics:
+    save_raw_control_command: true
+    save_saturated_control_command: true
+    save_actuator_state: true
+    save_delay_buffer_state: false
+
+
+# ------------------------------------------------------------------------------
+# 8. Simulation settings
+# ------------------------------------------------------------------------------
+
+simulation:
+  scenario: "stop_and_go"
+
+  time:
+    t_start: 0.0
+    t_end: 40.0
+    dt_output: 0.01
+
+  integrator:
+    method: "RK45"
+    rtol: 1.0e-8
+    atol: 1.0e-10
+    max_step: 0.01
+
+  delay_buffer:
+    interpolation: "linear"
+    history_policy: "equilibrium"
+    max_delay: 0.60
+
+  state:
+    variables:
+      - "position"
+      - "velocity"
+      - "acceleration"
+      - "spacing"
+      - "relative_velocity"
+      - "actuator_state"
+      - "control_command"
+
+  event_detection:
+    collision:
+      enabled: true
+      terminate: true
+      threshold_spacing: 0.0
+
+    actuator_clipping:
+      enabled: true
+      terminate: false
+      report: true
+
+    invalid_state:
+      enabled: true
+      terminate: true
+
+  sampling:
+    save_every_output_step: true
+    downsample_for_figures: false
+    figure_dt: 0.02
+
+
+# ------------------------------------------------------------------------------
+# 9. Metrics
+# ------------------------------------------------------------------------------
+
+metrics:
+  acceleration:
+    compute_peak_abs: true
+    compute_min_max: true
+    compute_rms: true
+    compute_integral_abs: true
+    compute_clipping_count: true
+
+  spacing:
+    compute_min_spacing: true
+    compute_collision_count: true
+    compute_safety_margin: true
+    compute_time_below_warning_spacing: true
+
+  velocity:
+    compute_min_max: true
+    compute_rms_deviation_from_nominal: true
+    compute_recovery_time: true
+
+  wave:
+    compute_hdv_amplification_ratio: true
+    compute_cav_attenuation_ratio: true
+    compute_vehicle_to_vehicle_peak_ratios: true
+    compute_peak_time_shift: true
+
+    reference_signal: "leader_acceleration"
+
+    peak_window:
+      start: 6.0
+      end: 30.0
+
+    attenuation_definition: "cav_peak_abs_over_last_hdv_peak_abs"
+
+  comfort:
+    compute_jerk: true
+    jerk_from_acceleration_gradient: true
+    compute_rms_jerk: true
+    compute_peak_abs_jerk: true
+
+
+# ------------------------------------------------------------------------------
+# 10. Output files
+# ------------------------------------------------------------------------------
+
+outputs:
+  root: "data/processed/simulations/exp_vi_c_stop_and_go"
+
+  scenario:
+    leader_profile: "data/processed/simulations/exp_vi_c_stop_and_go/leader_profile.csv"
+    scenario_metadata: "data/processed/simulations/exp_vi_c_stop_and_go/scenario_metadata.yaml"
+
+  trajectories:
+    full_state: "data/processed/simulations/exp_vi_c_stop_and_go/full_state_trajectory.csv"
+    vehicle_trajectories: "data/processed/simulations/vehicle_trajectories.csv"
+    acceleration_profiles: "data/processed/simulations/stop_and_go_acceleration_profiles.csv"
+    spacing_profiles: "data/processed/simulations/stop_and_go_spacing_profiles.csv"
+    velocity_profiles: "data/processed/simulations/exp_vi_c_stop_and_go/velocity_profiles.csv"
+    control_profiles: "data/processed/simulations/exp_vi_c_stop_and_go/control_profiles.csv"
+
+  heatmap:
+    acceleration_space_time: "data/processed/simulations/space_time_acceleration_heatmap.csv"
+    spacing_space_time: "data/processed/simulations/exp_vi_c_stop_and_go/space_time_spacing_heatmap.csv"
+    velocity_space_time: "data/processed/simulations/exp_vi_c_stop_and_go/space_time_velocity_heatmap.csv"
+
+  metrics:
+    simulation_metrics: "results/metrics/exp_vi_c_stop_and_go_simulation_metrics.json"
+    wave_metrics: "results/metrics/exp_vi_c_stop_and_go_wave_metrics.csv"
+    safety_metrics: "results/metrics/exp_vi_c_stop_and_go_safety_metrics.json"
+    clipping_report: "results/metrics/exp_vi_c_stop_and_go_clipping_report.csv"
+    comfort_metrics: "results/metrics/exp_vi_c_stop_and_go_comfort_metrics.csv"
+    runtime_summary: "results/metrics/exp_vi_c_stop_and_go_runtime_summary.json"
+
+  verification:
+    no_collision_report: "certificates/verification_logs/exp_vi_c_stop_and_go_no_collision_report.json"
+    no_clipping_report: "certificates/verification_logs/exp_vi_c_stop_and_go_no_clipping_report.json"
+    attenuation_report: "certificates/verification_logs/exp_vi_c_stop_and_go_attenuation_report.json"
+    final_validation_report: "certificates/verification_logs/exp_vi_c_stop_and_go_validation_report.json"
+
+  figures:
+    fig7_pdf: "results/figures/fig7_space_time_heatmap.pdf"
+    fig7_tex: "results/figures/fig7_space_time_heatmap.tex"
+    fig7_png: "results/figures/fig7_space_time_heatmap.png"
+
+    fig8_pdf: "results/figures/fig8_time_domain_profiles.pdf"
+    fig8_tex: "results/figures/fig8_time_domain_profiles.tex"
+    fig8_png: "results/figures/fig8_time_domain_profiles.png"
+
+
+# ------------------------------------------------------------------------------
+# 11. Validation criteria
+# ------------------------------------------------------------------------------
+
+validation:
+  enabled: true
+
+  checks:
+    simulation_completed:
+      enabled: true
+      require_t_end_reached: true
+      t_end: 40.0
+      tolerance: 1.0e-9
+
+    finite_states:
+      enabled: true
+      reject_nan: true
+      reject_inf: true
+
+    no_collision:
+      enabled: true
+      min_spacing_strictly_greater_than: 0.0
+      tolerance: 1.0e-6
+
+    no_actuator_clipping:
+      enabled: true
+      acceleration_min: -3.0
+      acceleration_max: 3.0
+      tolerance: 1.0e-6
+
+    leader_profile_limits:
+      enabled: true
+      min_acceleration: -3.0
+      max_acceleration: 3.0
+      tolerance: 1.0e-6
+
+    wave_attenuation:
+      enabled: true
+      max_cav_peak_over_last_hdv_peak: 0.70
+      max_cav_rms_over_last_hdv_rms: 0.80
+
+    output_files:
+      enabled: true
+      required:
+        - "data/processed/simulations/space_time_acceleration_heatmap.csv"
+        - "data/processed/simulations/stop_and_go_acceleration_profiles.csv"
+        - "data/processed/simulations/stop_and_go_spacing_profiles.csv"
+        - "results/metrics/exp_vi_c_stop_and_go_simulation_metrics.json"
+        - "results/figures/fig7_space_time_heatmap.pdf"
+        - "results/figures/fig8_time_domain_profiles.pdf"
+
+  expected_behavior:
+    qualitative_claim: >
+      The stop-and-go perturbation is amplified across the HDV string but is
+      attenuated by the PC-SRC controlled CAV. The CAV remains within actuator
+      limits and the inter-vehicle spacing stays strictly positive.
+
+
+# ------------------------------------------------------------------------------
+# 12. Figure generation
+# ------------------------------------------------------------------------------
+
+figures:
+  fig7:
+    id: "fig7_space_time_heatmap"
+    enabled: true
+
+    title: "Space-Time Acceleration Heatmap"
+    caption: >
+      Space-time heatmap of acceleration responses under the stop-and-go
+      perturbation. The downstream CAV suppresses the wave induced by the
+      leader braking-and-recovery pulse.
+
+    data_source: "data/processed/simulations/space_time_acceleration_heatmap.csv"
+
+    plot_type: "space_time_heatmap"
+    backend: "matplotlib"
+    export_tikz: true
+    export_pgfplots: true
+    export_pdf: true
+    export_png: true
+
+    axes:
+      x:
+        variable: "time"
+        label: "Time [s]"
+        limits: [0.0, 40.0]
+
+      y:
+        variable: "vehicle_index"
+        label: "Vehicle index"
+        ticks: [0, 1, 2, 3, 4, 5]
+        tick_labels:
+          - "Leader"
+          - "HDV 1"
+          - "HDV 2"
+          - "HDV 3"
+          - "HDV 4"
+          - "CAV"
+
+    colorbar:
+      variable: "acceleration"
+      label: "Acceleration [m/s²]"
+      limits: [-3.0, 2.0]
+      cmap: "RdBu_r"
+
+    style:
+      figure_size_inches: [3.45, 2.45]
+      dpi: 300
+      font_family: "Times New Roman"
+      font_size: 8
+      interpolation: "nearest"
+      grid: false
+      show_vehicle_separators: true
+
+  fig8:
+    id: "fig8_time_domain_profiles"
+    enabled: true
+
+    title: "Acceleration and Spacing Profiles"
+    caption: >
+      Time-domain acceleration and spacing responses under the stop-and-go
+      scenario. The CAV acceleration remains within the actuator envelope and
+      spacing stays above the collision boundary.
+
+    data_sources:
+      acceleration: "data/processed/simulations/stop_and_go_acceleration_profiles.csv"
+      spacing: "data/processed/simulations/stop_and_go_spacing_profiles.csv"
+
+    plot_type: "stacked_time_profiles"
+    backend: "matplotlib"
+    export_tikz: true
+    export_pgfplots: true
+    export_pdf: true
+    export_png: true
+
+    layout:
+      rows: 2
+      cols: 1
+      share_x: true
+
+    axes:
+      x:
+        variable: "time"
+        label: "Time [s]"
+        limits: [0.0, 40.0]
+
+      acceleration:
+        variable: "acceleration"
+        label: "Acceleration [m/s²]"
+        limits: [-3.3, 2.2]
+        show_actuator_limits: true
+        actuator_limits: [-3.0, 3.0]
+
+      spacing:
+        variable: "spacing"
+        label: "Spacing [m]"
+        limits: [0.0, 35.0]
+        show_collision_boundary: true
+        collision_boundary: 0.0
+        show_warning_spacing: true
+        warning_spacing: 5.0
+
+    style:
+      figure_size_inches: [3.45, 3.10]
+      dpi: 300
+      font_family: "Times New Roman"
+      font_size: 8
+      line_width: 1.05
+      grid: true
+
+      vehicles:
+        leader:
+          index: 0
+          label: "Leader"
+          color: "black"
+          linestyle: "-"
+        hdv1:
+          index: 1
+          label: "HDV 1"
+          color: "#666666"
+          linestyle: "--"
+        hdv2:
+          index: 2
+          label: "HDV 2"
+          color: "#D95F02"
+          linestyle: "--"
+        hdv3:
+          index: 3
+          label: "HDV 3"
+          color: "#7570B3"
+          linestyle: "--"
+        hdv4:
+          index: 4
+          label: "HDV 4"
+          color: "#D73027"
+          linestyle: "--"
+        cav:
+          index: 5
+          label: "CAV"
+          color: "#1F77B4"
+          linestyle: "-"
+
+      legend:
+        enabled: true
+        location: "upper right"
+        font_size: 7
+        frameon: true
+
+
+# ------------------------------------------------------------------------------
+# 13. Execution profiles
+# ------------------------------------------------------------------------------
+
+profiles:
+  fast:
+    description: "Short stop-and-go simulation for AE smoke testing."
+
+    override:
+      simulation:
+        time:
+          t_start: 0.0
+          t_end: 25.0
+          dt_output: 0.02
+
+        integrator:
+          rtol: 1.0e-7
+          atol: 1.0e-9
+          max_step: 0.02
+
+      validation:
+        checks:
+          simulation_completed:
+            t_end: 25.0
+          wave_attenuation:
+            enabled: false
+
+      figures:
+        fig7:
+          axes:
+            x:
+              limits: [0.0, 25.0]
+        fig8:
+          axes:
+            x:
+              limits: [0.0, 25.0]
+
+  noisy:
+    description: "Stop-and-go robustness sanity check with mild noise."
+
+    override:
+      hdv_model:
+        noise:
+          enabled: true
+          acceleration_std: 0.03
+          seed: 20260816
+
+      cav:
+        sensor:
+          measurement_noise_enabled: true
+          spacing_noise_std: 0.02
+          relative_velocity_noise_std: 0.02
+          acceleration_noise_std: 0.01
+
+      validation:
+        checks:
+          wave_attenuation:
+            max_cav_peak_over_last_hdv_peak: 0.80
+            max_cav_rms_over_last_hdv_rms: 0.90
+
+  stress_delay:
+    description: "Stress test with larger communication delay and slower actuator."
+
+    override:
+      cav:
+        actuator:
+          nominal_tau_e: 0.50
+        communication:
+          nominal_tau_c: 0.30
+        delay_mismatch:
+          nominal_delta_max: 0.14
+
+      controller:
+        source:
+          mode: "lut"
+        scheduling:
+          enabled: true
+          source: "lut"
+          lut_file: "data/processed/lut/certified_gain_lut.json"
+          interpolation: "nearest"
+          fallback_policy: "nearest_feasible"
+          require_certificate: true
+
+      validation:
+        checks:
+          wave_attenuation:
+            enabled: false
+
+  plotting_only:
+    description: "Regenerate Fig. 7 and Fig. 8 from existing processed data."
+
+    override:
+      execution:
+        run_simulation: false
+        run_metrics: true
+        run_validation: true
+        run_figure_generation: true
+        require_existing_processed_data: true
+
+
+# ------------------------------------------------------------------------------
+# 14. Runtime and reproducibility
+# ------------------------------------------------------------------------------
+
+execution:
+  run_simulation: true
+  run_metrics: true
+  run_validation: true
+  run_figure_generation: true
+
+  resume: false
+  overwrite_existing: true
+  fail_fast: true
+
+  save_config_snapshot: true
+  save_command_line: true
+  save_environment_snapshot: true
+
+  progress_bar: true
+  log_level: "INFO"
+
+  expected_runtime:
+    fast_minutes: 1
+    full_minutes: 5
+    stress_delay_minutes: 5
+
+
+reproducibility:
+  random_seed: 20260816
+  deterministic_order: true
+  write_metadata_sidecar: true
+
+  metadata_fields:
+    - "experiment_id"
+    - "scenario_id"
+    - "config_hash"
+    - "git_commit"
+    - "python_version"
+    - "solver_name"
+    - "solver_version"
+    - "timestamp_utc"

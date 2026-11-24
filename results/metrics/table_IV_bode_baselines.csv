@@ -1,0 +1,8 @@
+controller_code,controller,kp,kv,ka,h_s,isolated_h_inf,isolated_omega_peak,resonance_band_peak,resonance_band_omega,mixed_unit_h_inf,mixed_unit_omega_peak,strictly_mixed_stable
+pcsrc,PC-SRC (Proposed),1.15,1.18,0.8,1.0,1.0,0.0,0.9862,0.2,1.0,0.0,True
+no_pred_same,No Predictor (Same Gains),1.15,1.18,0.8,1.0,1.0,0.0,0.9862,0.2,1.0215,1.1,False
+no_pred_std,No Predictor (Standard CACC),0.46,0.5,0.42,1.0,1.0712,0.4,1.0712,0.4,1.1658,0.5,False
+classic_smith,Classical Smith Predictor,0.5,0.54,0.44,1.0,1.0515,0.36,1.0515,0.36,1.1279,0.48,False
+pade,Pade [1/1] Predictor,0.53,0.58,0.46,1.0,1.0317,0.34,1.0317,0.34,1.0964,0.46,False
+h_inf,Robust H_inf Feedback,0.9,1.35,0.56,1.0,1.0,0.0,0.9971,0.2,1.0443,0.64,False
+deep_lcc,Data-Driven DeeP-LCC,0.95,1.25,0.65,1.0,1.0,0.0,0.9931,0.2,1.0338,0.64,False

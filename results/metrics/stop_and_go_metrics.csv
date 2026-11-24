@@ -1,0 +1,2 @@
+wave_id,cav_penetration,damping_ratio,recovery_time_s,peak_headway_error_m
+# Full metrics require: make reproduce-all  (runs stop-and-go experiment)

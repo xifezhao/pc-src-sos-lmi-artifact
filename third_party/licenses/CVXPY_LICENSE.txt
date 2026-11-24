@@ -1,0 +1,1 @@
+CVXPY is distributed under the Apache License, Version 2.0 (https://www.cvxpy.org/). Copyright (c) Steven Diamond, Stephen Boyd, Akshay Agrawal, and contributors.
