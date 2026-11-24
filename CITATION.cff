@@ -14,7 +14,7 @@ authors:
 type: software
 license: MIT
 repository-code: "https://github.com/xifezhao/pc-src-sos-lmi-artifact"
-version: "2.1.2"
+version: "2.1.3"
 date-released: "2026-11-24"
 preferred-citation:
   type: article

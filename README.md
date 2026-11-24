@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.10–3.13](https://img.shields.io/badge/python-3.10%E2%80%933.13-blue.svg)](pyproject.toml)
 
-Open-source, self-contained software artifact (**v2.1.2**) accompanying the manuscript under review at *IEEE Transactions on Intelligent Transportation Systems*:
+Open-source, self-contained software artifact (**v2.1.3**) accompanying the manuscript under review at *IEEE Transactions on Intelligent Transportation Systems*:
 
 > **Low-Frequency String Stability Conditions and Lifted Polynomial Certificates for Mixed Traffic Platoons under Delay Mismatch**  
 > Haiying Dong (ORCID: `0000-0002-3909-3246`) and Xiaofei Zhao\* (ORCID: `0000-0003-0772-8240`)  
@@ -21,8 +21,8 @@ Open-source, self-contained software artifact (**v2.1.2**) accompanying the manu
 - **Software:** Python 3.10–3.13 (verified on Linux x86_64 Python 3.13 with `requirements-lock.txt`).
 - **Expected Runtime:**
   - `pytest -v tests/` (unit, API, YAML-sync & integrity suite): **~5–25 s**
-  - `scripts/make_figures.py` (offline vector PDF regeneration of Figs. 3–5): **~20–40 s**
-  - `scripts/reproduce_paper.py --fast` (25 MC trials, 4,000 LUT queries, Figs. 3–5): **~60–90 s**
+  - `scripts/make_figures.py` (offline vector PDF regeneration of Figs. 3–5): **~60–120 s**
+  - `scripts/reproduce_paper.py --fast` (25 MC trials, 4,000 LUT queries, Figs. 3–5): **~60–150 s**
   - `scripts/reproduce_paper.py --full` (1,000 MC trials, 20,000 LUT queries, Figs. 3–5): **~10–12 min** (measured `636.9 s` on Google Colab CPU)
 
 ## Quickstart & One-Command Reproduction
@@ -38,8 +38,8 @@ shasum -a 256 -c data/reference/golden_hashes.sha256
 # 3. Run automated unit, API & verification test suite
 PYTHONPATH=src pytest -v tests/
 
-# 4. Run unified offline reproduction pipeline (outputs JSON, LUT & Figs. 3–5)
-#    --fast: ~60–90 s; --full: ~10–12 min
+# 4. Run unified offline reproduction pipeline (outputs JSON, LUT, Figs. 3–5 & SHA-256)
+#    --fast: ~60–150 s; --full: ~10–12 min
 PYTHONPATH=src python3 scripts/reproduce_paper.py --fast
 # PYTHONPATH=src python3 scripts/reproduce_paper.py --full
 
@@ -47,7 +47,7 @@ PYTHONPATH=src python3 scripts/reproduce_paper.py --fast
 PYTHONPATH=src python3 scripts/make_figures.py --out-dir results/reproduced
 ```
 
-All single-source-of-truth parameters reside in [data/raw/scenario_definitions/nominal_platoon_parameters.yaml](data/raw/scenario_definitions/nominal_platoon_parameters.yaml) (verified programmatically against `PlatoonParams` in `src/pcsrc/models/platoon.py`). Reproduced outputs, Figs. 3–5 (`fig_headway_domain.pdf`, `fig_bode_mixed.pdf`, `fig_platoon_validation.pdf`), `certified_lut_4x4x3.{npz,csv}`, and `environment_snapshot.txt` are written to `results/reproduced/`.
+All single-source-of-truth parameters reside in [data/raw/scenario_definitions/nominal_platoon_parameters.yaml](data/raw/scenario_definitions/nominal_platoon_parameters.yaml) (verified programmatically against `PlatoonParams` in `src/pcsrc/models/platoon.py`). Frozen SHA-256-verified reference artifacts live in `results/colab_run/`; runtime reproduction outputs (`reproduced_summary.json`, Figs. 3–5 PDFs, `certified_lut_4x4x3.{npz,csv}`, `environment_snapshot.txt`, and `reproduced_hashes.sha256`) are written to `results/reproduced/`, which is intentionally gitignored so every evaluation run starts from a clean working tree.
 
 ## Empirical Data Provenance (NGSIM I-80)
 The bundled empirical leader trajectory ([data/raw/scenario_definitions/ngsim_i80_leader_trajectory.csv](data/raw/scenario_definitions/ngsim_i80_leader_trajectory.csv), `Vehicle_ID=1209`, Frames `3429–3828`, Lane 3, 400 frames at 10 Hz) is derived from the U.S. Department of Transportation / FHWA Next Generation Simulation (NGSIM) I-80 dataset (DOI: [10.21949/1504477](https://doi.org/10.21949/1504477), USDOT Data Portal license: CC BY-SA 3.0 / 4.0). Full provenance, mirror URL, Savitzky–Golay preprocessing details, and SHA-256 verification are documented in [data/raw/external/README.md](data/raw/external/README.md).

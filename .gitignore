@@ -19,4 +19,7 @@ dist/
 
 # Exclude unpublished manuscript and cover letter
 paper/
+
+# Runtime reproduction outputs (intentionally untracked; frozen SHA-256-verified
+# reference artifacts live in results/colab_run/ and data/reference/)
 results/reproduced/

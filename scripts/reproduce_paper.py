@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import csv
 from dataclasses import replace
+import hashlib
 import json
 from pathlib import Path
 import platform
@@ -162,7 +163,27 @@ def main() -> None:
     }
     out_file = args.out_dir / "reproduced_summary.json"
     out_file.write_text(json.dumps(summary, indent=2))
+
+    # Compute and record SHA-256 checksums for all generated runtime artifacts
+    artifact_files = [
+        out_file,
+        args.out_dir / "environment_snapshot.txt",
+        args.out_dir / "certified_lut_4x4x3.csv",
+        args.out_dir / "certified_lut_4x4x3.npz",
+        *(args.out_dir / name for name in generated_figs),
+    ]
+    hash_lines: list[str] = []
+    for fpath in artifact_files:
+        if fpath.exists():
+            digest = hashlib.sha256(fpath.read_bytes()).hexdigest()
+            hash_lines.append(f"{digest}  {fpath.name}")
+    hash_manifest = args.out_dir / "reproduced_hashes.sha256"
+    hash_manifest.write_text("\n".join(hash_lines) + "\n")
+
     print(f"[PC-SRC AE] Completed in {summary['meta']['elapsed_s']}s -> {out_file}")
+    print(f"[PC-SRC AE] Generated artifact SHA-256 checksums ({hash_manifest}):")
+    for line in hash_lines:
+        print(f"  {line}")
 
 
 if __name__ == "__main__":

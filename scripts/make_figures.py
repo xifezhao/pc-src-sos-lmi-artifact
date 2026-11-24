@@ -13,6 +13,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
 from pathlib import Path
 import sys
 import time
@@ -284,7 +285,8 @@ def main() -> None:
     elapsed = round(time.perf_counter() - t0, 2)
     print(f"[PC-SRC Figures] Wrote {len(files)} PDFs in {elapsed}s -> {args.out_dir}")
     for f in files:
-        print(f"  - {f.name}")
+        digest = hashlib.sha256(f.read_bytes()).hexdigest()
+        print(f"  {digest}  {f.name}")
 
 
 if __name__ == "__main__":
