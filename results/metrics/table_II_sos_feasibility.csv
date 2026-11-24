@@ -1,7 +1,0 @@
-formulation,ring_variables,n_vars,multiplier_deg_2d,gram_basis_dim,solver_time_ms
-"Denominator Dominance (Cert A, SOS)",1 (x),1,2,2,14.2
-"Schur Attenuation (Cert B, SOS)","5 (x,y,z,c,sigma)",5,4,21,86.5
-Dual-Certificate Combined (Stage A + Stage B),--,5,4,23,100.7
-"Monolithic Lifted Coupled (M3, No y-z Gen.)","5 (x,y,z,c,sigma)",5,6,56,284.0
-Monolithic Young Fixed-eps (M1),"3 (x,c,sigma)",3,4,10,38.4
-Monolithic Young Affine-eps(x) (M2),"3 (x,c,sigma)",3,6,20,64.8

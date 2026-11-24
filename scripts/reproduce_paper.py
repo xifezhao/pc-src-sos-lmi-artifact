@@ -132,7 +132,21 @@ def main() -> None:
     sup_res = run_empirical_wave_and_switching_experiments(params)
     ngsim_csv = ROOT / "data" / "raw" / "scenario_definitions" / "ngsim_i80_leader_trajectory.csv"
     ngsim_res = replay_bundled_ngsim_csv(ngsim_csv)
-    lut_res = benchmark_lut(n_queries=lut_queries)
+    lut_res = benchmark_lut(n_queries=lut_queries, save_dir=args.out_dir)
+
+    # Record environment snapshot alongside reproduced outputs
+    snap_lines = [
+        f"python: {platform.python_version()}",
+        f"platform: {platform.platform()}",
+        f"numpy: {np.__version__}",
+    ]
+    for pkg in ("scipy", "matplotlib", "cvxpy", "clarabel"):
+        try:
+            mod = __import__(pkg)
+            snap_lines.append(f"{pkg}: {getattr(mod, '__version__', 'installed')}")
+        except ImportError:
+            snap_lines.append(f"{pkg}: not-installed")
+    (args.out_dir / "environment_snapshot.txt").write_text("\n".join(snap_lines) + "\n")
 
     summary = {
         "meta": {

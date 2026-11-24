@@ -1,3 +1,10 @@
-# Result Integrity and SHA-256 Auditing
+# Result Integrity Verification
 
-Every generated CSV, JSON, YAML, NPZ, MAT, and PDF artifact is hashed with SHA-256 and recorded in `configs/validation/golden_hashes.yaml` and `data/reference/golden_hashes.sha256`.
+Verify all bundled reference data and outputs against the SHA-256 manifest:
+```bash
+shasum -a 256 -c data/reference/golden_hashes.sha256
+```
+Run the automated test suite verifying all analytical bounds, SOS certificates, simulations, NGSIM replay, and certified LUT benchmarks:
+```bash
+PYTHONPATH=src pytest -v tests/
+```

@@ -1,20 +1,14 @@
-# Reproducibility Guide
+# Reproducibility Overview
 
-## Hardware Requirements
-- **CPU:** Multi-core modern processor (e.g., Intel i7 or equivalent)
-- **RAM:** Minimum 16GB, recommended 32GB for full-scale simulations.
-- **OS:** Linux, macOS, or Windows via WSL2.
+All experiments in the accompanying *IEEE T-ITS* manuscript run on standard CPU hardware using open-source Python packages (`numpy`, `scipy`, `matplotlib`, `cvxpy`, `clarabel`) with **zero commercial solver dependencies**.
 
-## Step-by-Step Reproduction
-1. Clone the repository and navigate to this directory.
-2. Install the package using pip: `pip install -e .` or using conda: `conda env create -f environment.yml && conda activate pcsrc`
-3. Run `make reproduce-fast` for a quick verification.
-4. Run `make reproduce-all` to generate all figures and results.
+## Single Entry Point
+```bash
+# Fast Artifact Evaluation check (~50 s, 25 MC trials, 4,000 LUT queries)
+PYTHONPATH=src python3 scripts/reproduce_paper.py --fast
 
-## Expected Outputs and Timing
-- `make reproduce-fast`: Completes in < 5 minutes. Outputs summary metrics to the console.
-- `make reproduce-all`: May take up to 2 hours depending on hardware. Outputs generated in `results/` and `figures/` directories.
+# Full paper reproduction (~10–12 min, 1,000 MC trials, 20,000 LUT queries)
+PYTHONPATH=src python3 scripts/reproduce_paper.py --full
+```
 
-## Troubleshooting
-- **Mosek License Issue:** If using Mosek, ensure your license file is placed appropriately (e.g., `~/mosek/mosek.lic`).
-- **Memory Errors:** If the full reproduction crashes, try closing other applications or running on a machine with more RAM.
+Outputs are written to `results/reproduced/reproduced_summary.json` together with `results/reproduced/environment_snapshot.txt` and `results/reproduced/certified_lut_4x4x3.{npz,csv}`.

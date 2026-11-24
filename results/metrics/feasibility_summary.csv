@@ -1,2 +1,0 @@
-parameter_grid,total_points,feasible_dual,feasible_monolithic,conservatism_gap
-# Full metrics require: make reproduce-all  (runs SOS solver grid sweep)

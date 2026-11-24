@@ -1,2 +1,0 @@
-slice_name,ka,kv_range,nominal_area,robust_area,conservatism_ratio
-# Full metrics require: make reproduce-all  (runs structural conservatism experiment)

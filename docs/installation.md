@@ -1,7 +1,7 @@
 # Installation
 
 ```bash
-pip install -e .
-pip install numpy scipy cvxpy clarabel scs pyyaml matplotlib pytest
+python3 -m pip install --upgrade pip
+python3 -m pip install -r requirements-lock.txt
+python3 -m pip install -e .
 ```
-Verify installation with `pytest tests/ -v`.

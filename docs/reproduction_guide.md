@@ -1,5 +1,14 @@
-# Step-by-Step Reproduction Guide
+# One-Command Reproduction
 
-1. Run `python scripts/run_paper_experiments_full.py` to execute all SDP solvers, frequency-domain sweeps, microscopic ODE simulations, Monte Carlo / adversarial evaluations, and LUT benchmarks.
-2. Run `pytest tests/ -v` to validate all unit, integration, regression, and AE checks.
-3. Inspect `results/paper_master_results.json` for the complete consolidated numerical dictionary matching Tables I–VII and Figs. 4–9.
+```bash
+python3 -m pip install -r requirements-lock.txt
+python3 -m pip install -e .
+shasum -a 256 -c data/reference/golden_hashes.sha256
+PYTHONPATH=src pytest -v tests/
+PYTHONPATH=src python3 scripts/reproduce_paper.py --fast
+```
+
+For full 1,000-trial Monte Carlo and 20,000-query LUT reproduction (~10–12 min on CPU):
+```bash
+PYTHONPATH=src python3 scripts/reproduce_paper.py --full
+```

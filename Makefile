@@ -1,21 +1,17 @@
-.PHONY: install test reproduce-fast reproduce-all verify-hashes clean
+.PHONY: install test verify fast full clean
 
 install:
-	pip install -e .[dev]
+	python3 -m pip install -r requirements-lock.txt
+	python3 -m pip install -e .
+
+verify:
+	shasum -a 256 -c data/reference/golden_hashes.sha256
 
 test:
 	PYTHONPATH=src pytest -v tests/
 
-reproduce-fast:
+fast:
 	PYTHONPATH=src python3 scripts/reproduce_paper.py --fast
 
-reproduce-all:
+full:
 	PYTHONPATH=src python3 scripts/reproduce_paper.py --full
-	PYTHONPATH=src pytest -v tests/
-
-verify-hashes:
-	shasum -a 256 -c data/reference/golden_hashes.sha256
-
-clean:
-	rm -rf .pytest_cache *.egg-info results/reproduced
-	find . -type d -name __pycache__ -exec rm -rf {} +

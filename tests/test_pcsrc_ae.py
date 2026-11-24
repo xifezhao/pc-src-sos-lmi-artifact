@@ -1,4 +1,4 @@
-"""Automated Unit & Artifact Evaluation (AE) Test Suite for PC-SRC (IEEE/ACM 4-Badge).
+"""Automated Unit & Artifact Evaluation (AE) Test Suite for PC-SRC.
 
 Verifies:
   1. Analytical low-frequency bounds & Lagrange remainder overlap (Section IV, Remark 3).
@@ -126,6 +126,8 @@ def test_real_ngsim_i80_csv_replay() -> None:
 def test_lut_memory_and_dynamic_switching() -> None:
     lut_res = benchmark_lut(n_queries=1000)
     assert lut_res["grid_points"] == 48
+    assert lut_res["certified_cells"] == 48
+    assert lut_res["min_dual_cert_margin"] > 0.0
     assert lut_res["memory_bytes"] == 576
     assert lut_res["flat_index_buffer"]["mean_us"] < 50.0
 

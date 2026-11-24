@@ -1,17 +1,31 @@
 cff-version: 1.2.0
-message: "If you use this software artifact, please cite the accompanying IEEE T-ITS manuscript."
-title: "Low-Frequency String Stability Conditions and Lifted Polynomial Certificates for Mixed Traffic Platoons under Delay Mismatch"
+message: "If you use this software artifact, please cite both the software release and the accompanying manuscript (currently under review at IEEE Transactions on Intelligent Transportation Systems)."
+title: "PC-SRC SOS-LMI & Mixed Traffic Platoon Artifact"
+abstract: "Open-source Python/CVXPY+Clarabel software artifact accompanying the manuscript 'Low-Frequency String Stability Conditions and Lifted Polynomial Certificates for Mixed Traffic Platoons under Delay Mismatch' (under review, IEEE T-ITS). Permanent Zenodo archival DOI will be minted upon manuscript acceptance."
 authors:
   - family-names: "Dong"
     given-names: "Haiying"
     orcid: "https://orcid.org/0000-0002-3909-3246"
-    affiliation: "Lanzhou Jiaotong University"
+    affiliation: "School of New Energy and Power Engineering & Institute of Integrated Automation, Lanzhou Jiaotong University"
   - family-names: "Zhao"
     given-names: "Xiaofei"
     orcid: "https://orcid.org/0000-0003-0772-8240"
-    affiliation: "Lanzhou Petrochemical University of Vocational Technology & Lanzhou Jiaotong University"
+    affiliation: "School of Information Engineering, Lanzhou Petrochemical University of Vocational Technology & School of Automation and Electrical Engineering, Lanzhou Jiaotong University"
 type: software
 license: MIT
 repository-code: "https://github.com/xifezhao/pc-src-sos-lmi-artifact"
-version: "2.0.0"
+version: "2.1.0"
 date-released: "2026-11-24"
+preferred-citation:
+  type: article
+  title: "Low-Frequency String Stability Conditions and Lifted Polynomial Certificates for Mixed Traffic Platoons under Delay Mismatch"
+  authors:
+    - family-names: "Dong"
+      given-names: "Haiying"
+      orcid: "https://orcid.org/0000-0002-3909-3246"
+    - family-names: "Zhao"
+      given-names: "Xiaofei"
+      orcid: "https://orcid.org/0000-0003-0772-8240"
+  journal: "IEEE Transactions on Intelligent Transportation Systems"
+  year: 2026
+  notes: "Manuscript under peer review; archival Zenodo DOI to be assigned upon acceptance."

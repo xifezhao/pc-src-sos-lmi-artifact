@@ -1,9 +1,7 @@
-# Paper Table Mapping
+# Manuscript Table Mapping
 
-- **Table I**: `PlatoonParams` & `HDVUncertaintyBox` (`data/raw/scenario_definitions/nominal_platoon_parameters.yaml`).
-- **Table II**: `results/metrics/table_II_sos_feasibility.csv` & `results/tables/table_II_sos_feasibility.tex`.
-- **Table III**: `results/metrics/table_III_delay_robustness.csv` & `results/tables/table_III_robustness_metrics.tex`.
-- **Table IV**: `results/metrics/table_IV_bode_baselines.csv`.
-- **Table V**: `results/metrics/table_V_platoon_baselines.csv`.
-- **Table VI**: `results/metrics/table_VI_mpr_scalability.csv` & `results/tables/table_IV_time_domain_metrics.tex`.
-- **Table VII**: `results/metrics/table_VII_lut_runtime.csv` & `results/tables/table_V_lut_runtime.tex`.
+- **Table I:** Nominal parameters, sweep ranges, and $\Theta^{\mathrm{HDV}}$ (`data/raw/scenario_definitions/nominal_platoon_parameters.yaml`, `src/pcsrc/models/platoon.py`).
+- **Table II:** SOS-LMI dimensions, Clarabel runtimes, and feasible coverage (`results/colab_run/colab_verified_summary.json` -> `sos_benchmark`).
+- **Table III:** Frequency-domain Bode attenuation across controllers (`colab_verified_summary.json` -> `bode.table` & `colab_supplement_summary.json` -> `bode_h110`).
+- **Table IV:** 20-vehicle two-cycle/stress baselines & real NGSIM I-80 replay (`colab_verified_summary.json` -> `micro_simulation.baselines` & `colab_ngsim_real_summary.json`).
+- **Table V:** MPR scalability across 0%–100% CAV penetration (`colab_verified_summary.json` -> `micro_simulation.mpr_sweep`).

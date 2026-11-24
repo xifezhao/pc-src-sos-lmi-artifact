@@ -1,3 +1,3 @@
-# Numerical Precision and Conditioning
+# Deterministic Execution
 
-Polynomial variables `(x, y, z, c, sigma)` are dimensionlessly scaled onto `[-1, 1]` and normalized by characteristic amplitude `S_y = max |D_nom|(x)` prior to SDP assembly. Every SDP solution is audited post-solve for minimum symmetric Gram eigenvalue `>= -5e-6` and maximum monomial identity residual `<= 5e-5`.
+All analytical checks, Sturm root isolations, Clarabel interior-point solves, nonlinear micro-simulations (`dt = 0.01 s`), and seeded NumPy RNG streams run deterministically on CPU. Minor floating-point differences (`< 1e-6`) may occur across BLAS/LAPACK implementations; `tests/test_pcsrc_ae.py` verifies all scientific invariants within documented tolerances.
