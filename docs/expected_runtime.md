@@ -1,7 +1,12 @@
-# Compute Budget
+# Expected Runtime
 
-All benchmarks were executed on a single standard CPU environment (Google Colab Linux x86_64, no GPU, no commercial solver):
-- Unit & AE test suite (`pytest -v tests/`): **~20 s**
-- Fast verification (`scripts/reproduce_paper.py --fast`): **~50 s**
-- Full reproduction (`scripts/reproduce_paper.py --full`, 1,000 MC trials + 20,000 LUT queries): **~10–12 min** (`636.9 s` measured)
-- Peak RAM: **< 1.5 GB** (recommended ≥ 2 GB); Disk footprint: **< 250 MB**.
+Wall-clock timings measured on a single standard CPU (Linux x86_64, Python 3.13, no GPU):
+
+| Command | Scope | Expected Wall-Clock Time |
+|---|---|---|
+| `shasum -a 256 -c data/reference/golden_hashes.sha256` | 11-file integrity check | < 1 s |
+| `PYTHONPATH=src pytest -v tests/` | 7 unit & scientific invariant tests | ~15–25 s |
+| `PYTHONPATH=src python3 scripts/reproduce_paper.py --fast` | All tables/analyses, 25 MC trials, 4,000 LUT queries | ~45–60 s |
+| `PYTHONPATH=src python3 scripts/reproduce_paper.py --full` | Full paper suite, 1,000 MC trials, 20,000 LUT queries | ~10–12 min (`636.9 s` measured) |
+
+See [reproducibility/compute_budget.md](../reproducibility/compute_budget.md) for memory and disk budget details.

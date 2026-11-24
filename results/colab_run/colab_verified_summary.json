@@ -393,6 +393,10 @@
     "trilinear_interpolation": {
       "mean_us": 43.62,
       "p99_us": 77.13
-    }
+    },
+    "certified_cells": 48,
+    "min_dual_cert_margin": 0.00637,
+    "seed": 20260816,
+    "lut_table_file": "certified_lut_4x4x3.csv"
   }
 }
