@@ -5,7 +5,7 @@ Runs all analytical, SOS-LMI (CVXPY/Clarabel), frequency-domain Bode,
 Monte Carlo, adversarial worst-case, MPR scalability), and O(1) LUT benchmarks.
 
 Generates:
-  - colab_verified_results.json (all verified numbers for Tables I-VI)
+  - colab_verified_summary.json (all verified numbers for Tables I-V)
   - fig_headway_domain.pdf      (Fig. 3: h_min vs tau_e + SOS feasibility domain)
   - fig_bode_mixed.pdf          (Fig. 4: Bode magnitude & mixed-unit attenuation)
   - fig_platoon_validation.pdf  (Fig. 5: 20-veh shockwave damping + MPR sweep)

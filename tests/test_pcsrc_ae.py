@@ -144,3 +144,54 @@ def test_golden_metrics_present_and_consistent() -> None:
     assert golden["mc_pcsrc_collisions"] == 0
     assert golden["ngsim_vehicle_id"] == 1209
     assert golden["lut_memory_bytes"] == 576
+
+
+def test_sos_public_api_exports() -> None:
+    cvxpy = pytest.importorskip("cvxpy")
+    _ = cvxpy
+    import pcsrc.sos as sos_pkg
+
+    assert len(sos_pkg._LAZY_EXPORTS) >= 7
+    for name in sos_pkg._LAZY_EXPORTS:
+        obj = getattr(sos_pkg, name)
+        assert callable(obj), f"pcsrc.sos.{name} should be callable"
+
+
+def test_nominal_yaml_matches_dataclass() -> None:
+    yaml_path = ROOT / "data" / "raw" / "scenario_definitions" / "nominal_platoon_parameters.yaml"
+    assert yaml_path.exists()
+    raw = yaml_path.read_text()
+    try:
+        import yaml
+        cfg = yaml.safe_load(raw)
+    except ImportError:
+        cfg = {}
+        for line in raw.splitlines():
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            k, v = stripped.split(":", 1)
+            cfg[k.strip()] = float(v.strip())
+
+    params = PlatoonParams()
+    mapping = {
+        "vehicle_length_m": params.vehicle_length,
+        "standstill_gap_m": params.standstill_gap,
+        "headway_s": params.headway,
+        "tau_a_s": params.tau_a,
+        "tau_e_s": params.tau_e,
+        "tau_c_s": params.tau_c,
+        "a_min_ms2": params.a_min,
+        "a_max_ms2": params.a_max,
+        "v0_ms": params.v0,
+        "v_free_ms": params.v_free,
+        "kp": params.kp,
+        "kv": params.kv,
+        "ka": params.ka,
+        "delta_max_s": params.delta_max,
+        "omega_min_rads": params.omega_min,
+        "omega_bar_rads": params.omega_bar,
+    }
+    assert set(cfg.keys()) == set(mapping.keys())
+    for k, expected in mapping.items():
+        assert float(cfg[k]) == pytest.approx(expected, rel=1e-12), f"Mismatch for {k}"

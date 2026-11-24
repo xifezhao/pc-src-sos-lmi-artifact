@@ -1,13 +1,13 @@
 """Unified single-entry reproduction pipeline for IEEE T-ITS PC-SRC manuscript.
 
 Reproduces all Tables (I-V), Figures (3-5), real FHWA NGSIM I-80 trajectory replay,
-and online LUT dynamic switching + 2% road grade verification.
+and online LUT dynamic switching + 2% road grade verification completely offline.
 
 Usage:
-    # Fast Artifact Evaluation check (< 60 s, 25 Monte Carlo trials)
+    # Fast Artifact Evaluation check (~60–90 s, 25 Monte Carlo trials + Figs. 3–5)
     PYTHONPATH=src python3 scripts/reproduce_paper.py --fast
 
-    # Full paper reproduction (1,000 Monte Carlo trials)
+    # Full paper reproduction (1,000 Monte Carlo trials + Figs. 3–5)
     PYTHONPATH=src python3 scripts/reproduce_paper.py --full
 """
 
@@ -26,27 +26,21 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
+SCRIPTS = ROOT / "scripts"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
 
+from make_figures import compute_bode_curves, generate_paper_figures
 from pcsrc.analysis.asymptotic import sweep_headway_vs_actuator_lag, verify_low_freq_overlap
 from pcsrc.deployment.lut import benchmark_lut
-from pcsrc.models.platoon import (
-    HDVUncertaintyBox,
-    PlatoonParams,
-    gamma_classical_smith,
-    gamma_no_predictor,
-    gamma_pade_cacc,
-    gamma_pcsrc,
-    gamma_robust_hinf,
-    worst_case_hdv_envelope,
-)
+from pcsrc.models.platoon import PlatoonParams
 from pcsrc.simulation.micro_sim import (
     _simulate_with_custom_leader,
     run_all_micro_experiments,
     run_empirical_wave_and_switching_experiments,
 )
-from pcsrc.sos.certificates import benchmark_sos_formulations
 
 
 def replay_bundled_ngsim_csv(csv_path: Path) -> dict:
@@ -96,10 +90,13 @@ def replay_bundled_ngsim_csv(csv_path: Path) -> dict:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Reproduce PC-SRC IEEE T-ITS paper results.")
+    from pcsrc.sos.certificates import benchmark_sos_formulations
+
+    parser = argparse.ArgumentParser(description="Reproduce PC-SRC IEEE T-ITS paper results and figures offline.")
     mode = parser.add_mutually_exclusive_group()
-    mode.add_argument("--fast", action="store_true", help="Fast AE verification mode (25 MC trials, <60s).")
-    mode.add_argument("--full", action="store_true", help="Full paper reproduction (1,000 MC trials).")
+    mode.add_argument("--fast", action="store_true", help="Fast AE verification mode (25 MC trials + Figs. 3–5, ~60–90 s).")
+    mode.add_argument("--full", action="store_true", help="Full paper reproduction (1,000 MC trials + Figs. 3–5).")
+    parser.add_argument("--no-figures", action="store_true", help="Skip PDF figure rendering (JSON + LUT only).")
     parser.add_argument("--out-dir", type=Path, default=ROOT / "results" / "reproduced")
     args = parser.parse_args()
 
@@ -114,25 +111,18 @@ def main() -> None:
     overlap = verify_low_freq_overlap(params)
     hw_sweep = sweep_headway_vs_actuator_lag(params)
     sos_res = benchmark_sos_formulations(params)
-
-    # Bode (h=1.00 s and h=1.10 s)
-    w = np.geomspace(0.01, 100.0, 400)
-    h_bar, worst_hdv = worst_case_hdv_envelope(w, HDVUncertaintyBox(), v_e=params.v0, v_free=params.v_free, s0=params.standstill_gap)
-    tau_a_hat = params.tau_a - 0.04
-    pc_h100 = np.abs(gamma_pcsrc(w, params.kp, params.kv, params.ka, 1.00, params.tau_e, params.tau_c, params.tau_a, tau_a_hat))
-    pc_h110 = np.abs(gamma_pcsrc(w, params.kp, params.kv, params.ka, 1.10, params.tau_e, params.tau_c, params.tau_a, tau_a_hat))
-    bode_summary = {
-        "worst_hdv_peak": round(float(worst_hdv["peak"]), 4),
-        "pc_src_h100_hinf_cav": round(float(np.max(pc_h100)), 4),
-        "pc_src_h100_hinf_unit": round(float(np.max((h_bar**2) * pc_h100)), 4),
-        "pc_src_h110_hinf_unit": round(float(np.max((h_bar**2) * pc_h110)), 4),
-    }
-
+    bode_res = compute_bode_curves(params)
     micro_res = run_all_micro_experiments(params, mc_trials=mc_trials)
     sup_res = run_empirical_wave_and_switching_experiments(params)
     ngsim_csv = ROOT / "data" / "raw" / "scenario_definitions" / "ngsim_i80_leader_trajectory.csv"
     ngsim_res = replay_bundled_ngsim_csv(ngsim_csv)
     lut_res = benchmark_lut(n_queries=lut_queries, save_dir=args.out_dir)
+
+    generated_figs: list[str] = []
+    if not args.no_figures:
+        fig_paths = generate_paper_figures(hw_sweep, sos_res, bode_res, micro_res, args.out_dir)
+        generated_figs = [p.name for p in fig_paths]
+        print(f"[PC-SRC AE] Rendered {len(generated_figs)} PDF figures -> {args.out_dir}")
 
     # Record environment snapshot alongside reproduced outputs
     snap_lines = [
@@ -154,12 +144,13 @@ def main() -> None:
             "platform": platform.platform(),
             "python": platform.python_version(),
             "elapsed_s": round(time.perf_counter() - t0, 2),
+            "generated_figures": generated_figs,
         },
         "overlap_verification": overlap,
         "headway_sweep": hw_sweep,
         "sos_single_point": sos_res["single_point_sdp"],
         "sos_tau_c_sweep": sos_res["tau_c_sweep"],
-        "bode_summary": bode_summary,
+        "bode_summary": bode_res["summary"],
         "micro_baselines": micro_res["baselines"],
         "monte_carlo": micro_res["monte_carlo"],
         "adversarial_worst_case": micro_res["adversarial_worst_case"],

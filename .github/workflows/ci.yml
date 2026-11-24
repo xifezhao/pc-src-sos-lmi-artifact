@@ -21,5 +21,8 @@ jobs:
           pip install --no-deps -e .
       - name: Verify SHA-256 golden checksums
         run: shasum -a 256 -c data/reference/golden_hashes.sha256
+      - name: Public API import smoke test
+        run: |
+          PYTHONPATH=src python -c "import pcsrc, pcsrc.sos; [getattr(pcsrc.sos, n) for n in pcsrc.sos._LAZY_EXPORTS]; print('OK:', len(pcsrc.sos._LAZY_EXPORTS), 'exports')"
       - name: Run unit & AE reproducibility tests
         run: PYTHONPATH=src pytest -v tests/
